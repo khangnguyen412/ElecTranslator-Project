@@ -1,0 +1,28 @@
+{
+    "appId": "com.electranslator.app",
+    "productName": "ElecTranslator",
+    "directories": {
+        "output": "release",
+        "buildResources": "assets"
+    },
+    "files": [
+        "dist/**/*",
+        "dist-electron/**/*.js",
+        "!dist-electron/**/*.ts",
+        "!dist-electron/**/*.map",
+        "package.json"
+    ],
+    "win": {
+        "target": "nsis",
+        "icon": "assets/icon.ico"
+    },
+    "mac": {
+        "target": "dmg",
+        "icon": "assets/icon.icns"
+    },
+    "linux": {
+        "target": "AppImage",
+        "icon": "assets/icon.png"
+    },
+    "asar": true
+}

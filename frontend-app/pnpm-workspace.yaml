@@ -1,0 +1,5 @@
+allowBuilds:
+  canvas: true
+  electron-winstaller: true
+  sharp: true
+  tesseract.js: true
