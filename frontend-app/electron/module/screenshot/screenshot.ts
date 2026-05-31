@@ -1,33 +1,11 @@
 import { BrowserWindow, screen, desktopCapturer, ipcMain, app } from 'electron';
-import path from 'path';
-import fs from 'fs';
+
+import { getResourceElectronPath } from '../../utils/getResourcePath';
 
 /**
  * Disable hardware acceleration (Fix black screen issue when capturing video or other apps due to GPU conflict.)
  */
 app.disableHardwareAcceleration();
-
-/**
- * Helper: Resolve path to resources folder (dev & prod)
- */
-const getResourcePath = (filePath: string): string => {
-    if (process.env.NODE_ENV === 'development') {
-        const appPath = app.getAppPath();
-        let sourcePath = path.join(appPath, 'frontend-app', 'electron', 'module', 'screenshot', filePath);
-        if (fs.existsSync(sourcePath)) {
-            return sourcePath;
-        }
-        sourcePath = path.join(appPath, 'electron', 'module', 'screenshot', filePath);
-        if (fs.existsSync(sourcePath)) {
-            return sourcePath;
-        }
-        // Fallback: use __dirname to calculate path (replace dist-electron → electron)
-        return path.join(__dirname.replace('dist-electron', 'electron'), filePath);
-    } else {
-        // Prod: resources copied to app.asar.unpacked or dist
-        return path.join(process.resourcesPath, 'screenshot', filePath);
-    }
-}
 
 /**
  * Capture region by coordinate (using desktopCapturer + canvas crop)
@@ -149,7 +127,7 @@ export const captureRegionInteractive = async (): Promise<string> => {
         /**
          * Load selection overlay HTML
          */
-        const overlayPath = getResourcePath('selection-overlay.html');
+        const overlayPath = getResourceElectronPath('screenshot', '/selectionOverlay.html');
         selectionWindow.loadFile(overlayPath);
 
         selectionWindow.once('ready-to-show', () => {

@@ -20,6 +20,17 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "python/**/*",
+        "to": "python",
+        "filter": [
+          "**/*",
+          "!**/__pycache__",
+          "!**/*.pyc"
+        ]
+      }
+    ],
     "directories": {
       "output": "release"
     },

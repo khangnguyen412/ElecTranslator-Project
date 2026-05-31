@@ -1,21 +1,5 @@
-import importlib
-import subprocess
-import sys
-
-# Map import names → pip package names (built-in libs skipped)
-PACKAGES = {
-    "cv2": "opencv-python",
-    "easyocr": "easyocr",
-    "numpy": "numpy",
-    "deep_translator": "deep-translator"
-}
-
-for imp, pip in PACKAGES.items():
-    try:
-        importlib.import_module(imp)
-    except ImportError:
-        print(f" Installing {pip}...")
-        subprocess.run([sys.executable, "-m", "pip", "install", pip], check=True)
-
-# Remaining imports (sys, json, base64, os, warnings) are built-in
-import cv2, easyocr, numpy as np
+opencv-python>=4.8.0
+numpy>=1.24.0
+deep-translator>=1.11.0
+paddleocr>=2.7.0
+easyocr>=1.7.0

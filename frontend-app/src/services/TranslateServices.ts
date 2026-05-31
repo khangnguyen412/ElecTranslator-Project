@@ -6,7 +6,7 @@ import { getRequest, postRequest } from '@/api/axios';
  */
 import type { Prompt } from "@/types/translate.type";
 
-export const AITranslate = async (payload: Prompt): Promise<any> => {
+export const OllamaTranslate = async (payload: Prompt): Promise<any> => {
     try {
         return await postRequest('/chat', payload, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
     } catch (error) {

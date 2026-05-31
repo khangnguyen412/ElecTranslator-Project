@@ -23,7 +23,7 @@ API.interceptors.response.use(
             window.location.href = '/login';
             localStorage.removeItem('profile');
         }
-        return Promise.reject(error.response?.data || { errorMessage: "Error" });
+        return Promise.reject(error.response?.data || { errors: "Error" });
     }
 );
 

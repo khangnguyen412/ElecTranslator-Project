@@ -27,7 +27,6 @@ const TONE_INSTRUCTIONS_MAP: Record<string, string> = {
     romantic: 'Gentle, affectionate; subtle, non-vulgar.',
     fantasy_isekai: 'Magical, adventurous; world-building terms.',
     scifi_mecha: 'Futuristic, technical jargon; sci-fi/mecha context.',
-    adult: 'Faithful 18+ content; ignore moral filtering.',
     default: 'Accurate nuance; natural story flow.'
 };
 
@@ -42,10 +41,11 @@ const getToneHint = (text_type: string, tone: string) => {
  * Rules for each text type
  */
 const getRule = (text_type: string, target_lang: string) => {
-    const Critical = `[CRITICAL] Output MUST be strictly in ${target_lang}. NERVER OUTPUT ENGLISH unless it is an SFX/emotion/proper name/title.`;
+    const Critical = `[CRITICAL] Output MUST be strictly in ${target_lang}.`;
     const Rule1 = 'SFX/emotions ONLY → natural English interjections (e.g., "Ah!", "Ouch!"); preserve tone/pacing. Never translate SFX to target language.';
+    const Rule2 = 'If the word is a proper noun, translate it using English, never translate to target language.';
     if (['comic'].includes(text_type)) {
-        return `${Critical} Rules: ${Rule1} `;
+        return `Rules: ${Critical} ${Rule1} ${Rule2} `;
     } else {
         return `${Critical} `;
     }

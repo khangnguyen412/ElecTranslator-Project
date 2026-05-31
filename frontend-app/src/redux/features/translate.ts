@@ -2,14 +2,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 /**
- * Config
- */
-import AppConfig from "@/config/app.config";
-
-/**
  * Service
  */
-import { AITranslate } from "@/services/TranslateServices";
+import { OllamaTranslate } from "@/services/TranslateServices";
 import { buildContextAwarePrompt } from "@/services/PromptService";
 
 /**
@@ -25,7 +20,7 @@ export type TranslateState = {
 }
 
 export const requestOllamaThunk = createAsyncThunk<{ data: Prompt }, { promptParams: PromptParams }, { rejectValue: ErrorType }>(
-    'translate/requestOllama',
+    'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
             const promptParams = {
@@ -38,7 +33,7 @@ export const requestOllamaThunk = createAsyncThunk<{ data: Prompt }, { promptPar
                 source_text: data.promptParams.source_text || '',
             };
             const Payload = {
-                model: AppConfig.DefaultModel,
+                model: 'translategemma:12b',
                 messages: [
                     {
                         role: 'system',
@@ -49,14 +44,9 @@ export const requestOllamaThunk = createAsyncThunk<{ data: Prompt }, { promptPar
                         content: promptParams.source_text,
                     },
                 ],
-                options: {
-                    temperature: 0.2,
-                    top_p: 0.9,
-                    repeat_penalty: 1.1,
-                },
                 stream: false,
             }
-            const response = await AITranslate(Payload);
+            const response = await OllamaTranslate(Payload);
             return { data: response };
         } catch (error: any) {
             const errorData: ErrorType = error?.data || { errors: "Translate Failed" };

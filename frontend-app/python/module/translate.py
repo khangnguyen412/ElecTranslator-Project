@@ -1,20 +1,28 @@
+import json
+import sys
 from deep_translator import GoogleTranslator
 
-translator = GoogleTranslator(source='auto', target='vi')
 
-# source_language = "(喘气) .哈啊.. 放.. 放开我! 鸣... 你这混蛋...到底要折磨我到什么时 嗯哼...."
-source_language = "(喘气) .哈啊.. 放.. 放开我! 鸣... 你这混蛋...到底要折磨我到什么时 嗯哼...."
+class Translator:
+    def __init__(self, source_lang: str, target_lang: str):
+        try:
+            self.translator = GoogleTranslator(source=source_lang, target=target_lang)
+        except Exception as e:
+            print(json.dumps({"error": f"Translator init failed: {e}"}))
+            sys.exit(1)
 
-try:
-    # start translate
-    ket_qua = translator.translate(source_language)
-    
-    # translate result
-    print("--- KẾT QUẢ TEST ---")
-    print(f"Gốc: {source_language}")
-    print(f"Dịch: {ket_qua}")
-    
-except Exception as e:
-    print(f"Đã xảy ra lỗi: {e}")
+    def translate(self, text: str):
+        try:
+            # start translate
+            result = self.translator.translate(text)
+
+            # translate result
+            print(json.dumps(result))
+
+        except Exception as e:
+            print(json.dumps({"error": f"Translate failed: {e}"}))
 
 
+if __name__ == "__main__":
+    text = sys.argv[1]
+    Translator("en", "vi").translate(text)

@@ -13,7 +13,6 @@ import { CopyOutlined, CameraOutlined, SettingOutlined, TranslationOutlined } fr
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
 import { requestOllamaThunk } from '@/redux/features/translate';
-import { requestHealthCheckThunk } from '@/redux/features/healthCheck';
 
 /**
  * Type
@@ -26,13 +25,13 @@ import type { PromptParams } from "@/types/translate.type";
 import { getLangCodeByLang, getOcrCodeByLang, getLangNameByLang } from "@/config/language.config";
 
 interface TranslationPanelProps {
-    initialOcrText?: string;
+    defaultTranslate?: boolean;
 }
 
-const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ initialOcrText = '' }) => {
+const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslate = false }) => {
     const [sourceLang, setSourceLang] = useState<string | undefined>(undefined);
     const [targetLang, setTargetLang] = useState<string | undefined>(undefined);
-    const [sourceText, setSourceText] = useState<string>(initialOcrText);
+    const [sourceText, setSourceText] = useState<string>('');
     const [resultText, setResultText] = useState<string>('');
     const [category, setCategory] = useState<string | undefined>('default');
     const [tone, setTone] = useState<PromptParams['tone'] | undefined>(undefined);
@@ -52,17 +51,6 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ initialOcrText 
         navigator.clipboard.writeText(text);
         message.success(`Copied ${type === 'ocr' ? 'original text' : 'translated text'}!`);
     };
-
-    /**
-     * Handle health check
-     */
-    const handleHealthCheck = useCallback(async () => {
-        try {
-            await dispatch(requestHealthCheckThunk(null, {})).unwrap();
-        } catch (error: any) {
-            message.error(error?.errors || "Health Check Failed");
-        }
-    }, [dispatch]);
 
     /**
      * Handle OCR translation
@@ -219,10 +207,6 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ initialOcrText 
     }
 
     useEffect(() => {
-        handleHealthCheck();
-    }, [handleHealthCheck]);
-
-    useEffect(() => {
         const handler = () => handleTranslateRef.current();
         window.electronAPI?.onTriggerTranslate(handler);
         return () => {
@@ -277,10 +261,10 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ initialOcrText 
                 </Col>
             </Row>
             <Row style={{ width: '100%', maxWidth: '100%', margin: '20px auto' }} gutter={[16, 16]}>
-                <Col span={12} lg={12} md={24} xs={24}>
+                <Col span={24}>
                     {/* Input OCR */}
                     <Typography.Text strong>Input Text - {getLangNameByLang(sourceLang || '')?.langName || sourceLang}</Typography.Text>
-                    <Input.TextArea rows={16} value={sourceText} onChange={(e) => { setIsOcrTriggered(false); setSourceText(e.target.value); }} placeholder="Captured text will appear here..." style={{ fontFamily: 'monospace', marginTop: 8, fontSize: 18 }} />
+                    <Input.TextArea rows={8} value={sourceText} onChange={(e) => { setIsOcrTriggered(false); setSourceText(e.target.value); }} placeholder="Captured text will appear here..." style={{ fontFamily: 'monospace', marginTop: 8, fontSize: 18 }} />
                     <Row justify="start" align="middle" style={{ marginTop: 8 }}>
                         <Space wrap={true}>
                             <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(sourceText, 'ocr')} disabled={!sourceText}>
@@ -300,9 +284,9 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ initialOcrText 
                 </Col>
 
                 {/* Translation Result (Vietnamese) */}
-                <Col span={12} lg={12} md={24} xs={24}>
+                <Col span={24}>
                     <Typography.Text strong>Translation Result - {getLangNameByLang(targetLang || '')?.langName || targetLang}</Typography.Text>
-                    <Input.TextArea rows={16} value={resultText} readOnly placeholder={translating || translatingOCR ? "Translating..." : "Translation will appear here"} style={{ fontFamily: 'monospace', marginTop: 8, background: '#fafafa', fontSize: 18 }} />
+                    <Input.TextArea rows={8} value={resultText} readOnly placeholder={translating || translatingOCR ? "Translating..." : "Translation will appear here"} style={{ fontFamily: 'monospace', marginTop: 8, background: '#fafafa', fontSize: 18 }} />
                     <Row justify="start" align="middle" style={{ marginTop: 8 }}>
                         <Space wrap={true}>
                             <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(resultText, 'translated')} disabled={!resultText} style={{ marginTop: 8 }}                >

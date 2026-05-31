@@ -14,6 +14,7 @@ os.environ["GLOG_minloglevel"] = "3"
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 warnings.filterwarnings("ignore")
 
+
 class PaddleOCRServer:
     valid_lang = {"ch", "en", "vi", "japan", "korean", "chinese_cht", "latin", "arabic", "ta", "te", "ka", "devanagari"}
 
@@ -82,28 +83,28 @@ class PaddleOCRServer:
                     for page in result:
                         if page is None:
                             continue
-                            
+
                         # Convert OCRResult object to dict if needed
-                        if hasattr(page, '__dict__'):
+                        if hasattr(page, "__dict__"):
                             # PaddleOCR v3 OCRResult object
                             page_dict = page.__dict__ if isinstance(page.__dict__, dict) else {}
                         elif isinstance(page, dict):
                             page_dict = page
                         else:
                             page_dict = {}
-                        
+
                         # Try to get rec_texts from dict or object
                         rec_texts = None
                         rec_scores = None
-                        
+
                         if isinstance(page, dict):
                             rec_texts = page.get("rec_texts", [])
                             rec_scores = page.get("rec_scores", [])
-                        elif hasattr(page, 'rec_texts'):
+                        elif hasattr(page, "rec_texts"):
                             # Access as object attribute
-                            rec_texts = getattr(page, 'rec_texts', [])
-                            rec_scores = getattr(page, 'rec_scores', [])
-                        
+                            rec_texts = getattr(page, "rec_texts", [])
+                            rec_scores = getattr(page, "rec_scores", [])
+
                         # Process texts if found
                         if rec_texts:
                             for i, txt in enumerate(rec_texts):
@@ -111,7 +112,7 @@ class PaddleOCRServer:
                                     score = rec_scores[i] if rec_scores and i < len(rec_scores) else 1.0
                                     if score > 0.1:  # Keep low threshold
                                         texts.append(str(txt).strip())
-                        
+
                         # Fallback: PaddleOCR v2 list format
                         elif isinstance(page, (list, tuple)):
                             for line_res in page:
@@ -139,5 +140,4 @@ if __name__ == "__main__":
 
     # Get language argument from command line (e.g., "vi", "en")
     lang = sys.argv[1] if len(sys.argv) > 1 else "ch"
-    server = PaddleOCRServer(lang)
-    server.process_ocr()
+    PaddleOCRServer(lang).process_ocr()

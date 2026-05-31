@@ -11,12 +11,34 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
  * Module
  */
 import { captureRegionInteractive } from './module/screenshot/screenshot'
-import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocr-read";
+import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocrRead";
+import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
+import { parseRequirement } from "./utils/parseRequirement";
 
 /**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
+
+ipcMain.handle('check-python-version', async () => {
+    try {
+        const response = await checkPythonVersion();
+        return response;
+    } catch (error: any) {
+        return error;
+    }
+});
+
+ipcMain.handle('check-python-library-requirements', async (event) => {
+    try {
+        const requirements = parseRequirement();
+        const response = await checkPythonLibraryRequirements(requirements);
+        return response;
+    } catch (error: any) {
+        return { message: error };
+    }
+});
+
 
 ipcMain.handle('ocr-image-python', async (event, base64Data: string, lang: string = "en") => {
     return new Promise((resolve) => {

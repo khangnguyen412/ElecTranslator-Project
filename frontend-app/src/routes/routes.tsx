@@ -15,7 +15,7 @@ export const routes: RouteObject[] = [
     },
     {
         path: '/translate',
-        element: <TranslationPage initialOcrText={""} />,
-        index: true,
+        element: <TranslationPage defaultTranslate={false} />,
+        // index: true,
     }
 ]

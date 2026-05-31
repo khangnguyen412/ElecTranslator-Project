@@ -2,5 +2,5 @@
 export type ErrorType = {
     code: string;
     message: string;
-    errors?: any[];
+    errors?: any[] | string;
 }

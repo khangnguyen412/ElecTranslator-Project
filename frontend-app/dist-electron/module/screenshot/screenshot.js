@@ -1,38 +1,12 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.captureRegionInteractive = void 0;
 const electron_1 = require("electron");
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
+const getResourcePath_1 = require("../../utils/getResourcePath");
 /**
  * Disable hardware acceleration (Fix black screen issue when capturing video or other apps due to GPU conflict.)
  */
 electron_1.app.disableHardwareAcceleration();
-/**
- * Helper: Resolve path to resources folder (dev & prod)
- */
-const getResourcePath = (filePath) => {
-    if (process.env.NODE_ENV === 'development') {
-        const appPath = electron_1.app.getAppPath();
-        let sourcePath = path_1.default.join(appPath, 'frontend-app', 'electron', 'module', 'screenshot', filePath);
-        if (fs_1.default.existsSync(sourcePath)) {
-            return sourcePath;
-        }
-        sourcePath = path_1.default.join(appPath, 'electron', 'module', 'screenshot', filePath);
-        if (fs_1.default.existsSync(sourcePath)) {
-            return sourcePath;
-        }
-        // Fallback: use __dirname to calculate path (replace dist-electron → electron)
-        return path_1.default.join(__dirname.replace('dist-electron', 'electron'), filePath);
-    }
-    else {
-        // Prod: resources copied to app.asar.unpacked or dist
-        return path_1.default.join(process.resourcesPath, 'screenshot', filePath);
-    }
-};
 /**
  * Capture region by coordinate (using desktopCapturer + canvas crop)
  * @param x
@@ -145,7 +119,7 @@ const captureRegionInteractive = async () => {
         /**
          * Load selection overlay HTML
          */
-        const overlayPath = getResourcePath('selection-overlay.html');
+        const overlayPath = (0, getResourcePath_1.getResourceElectronPath)('screenshot', '/selectionOverlay.html');
         selectionWindow.loadFile(overlayPath);
         selectionWindow.once('ready-to-show', () => {
             selectionWindow?.show();

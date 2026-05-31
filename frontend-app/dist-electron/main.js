@@ -14,18 +14,39 @@ const electron_devtools_installer_1 = require("@tomjs/electron-devtools-installe
  * Module
  */
 const screenshot_1 = require("./module/screenshot/screenshot");
-const ocr_read_1 = require("./module/orc/ocr-read");
+const ocrRead_1 = require("./module/orc/ocrRead");
+const serviceCheck_1 = require("./module/checking/serviceCheck");
+const parseRequirement_1 = require("./utils/parseRequirement");
 /**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
+electron_1.ipcMain.handle('check-python-version', async () => {
+    try {
+        const response = await (0, serviceCheck_1.checkPythonVersion)();
+        return response;
+    }
+    catch (error) {
+        return error;
+    }
+});
+electron_1.ipcMain.handle('check-python-library-requirements', async (event) => {
+    try {
+        const requirements = (0, parseRequirement_1.parseRequirement)();
+        const response = await (0, serviceCheck_1.checkPythonLibraryRequirements)(requirements);
+        return response;
+    }
+    catch (error) {
+        return { message: error };
+    }
+});
 electron_1.ipcMain.handle('ocr-image-python', async (event, base64Data, lang = "en") => {
     return new Promise((resolve) => {
-        const pythonProcess = (0, ocr_read_1.getOrCreatePythonProcess)(lang);
+        const pythonProcess = (0, ocrRead_1.getOrCreatePythonProcess)(lang);
         /**
          * Push resolve function to queue for this language
          */
-        ocr_read_1.ocrRequests[lang].push(resolve);
+        ocrRead_1.ocrRequests[lang].push(resolve);
         /**
          * Send base64 data to python process stdin and end with \n (do not use .end())
          * Trim base64 data to remove leading/trailing whitespace and newline characters
@@ -98,9 +119,9 @@ electron_1.app.on("activate", () => {
  * Register Kill all python processes when app quits
  */
 electron_1.app.on('will-quit', () => {
-    for (const lang in ocr_read_1.pythonProcesses) {
-        if (ocr_read_1.pythonProcesses[lang]) {
-            ocr_read_1.pythonProcesses[lang].kill();
+    for (const lang in ocrRead_1.pythonProcesses) {
+        if (ocrRead_1.pythonProcesses[lang]) {
+            ocrRead_1.pythonProcesses[lang].kill();
         }
     }
 });

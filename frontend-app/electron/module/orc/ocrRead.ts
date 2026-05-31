@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { app } from "electron";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
 
