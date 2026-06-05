@@ -9,6 +9,10 @@ from contextlib import redirect_stdout, redirect_stderr
 from paddleocr import PaddleOCR
 
 # Terminal logging suppression
+os.environ["CPU_NUM"] = "2"
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
 os.environ["FLAGS_logtostderr"] = "0"
 os.environ["GLOG_minloglevel"] = "3"
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
@@ -33,6 +37,7 @@ class PaddleOCRServer:
                     det_db_box_thresh=0.5,
                     det_db_unclip_ratio=0.5,
                     rec_batch_num=6,
+                    enable_mkldnn=False,
                 )
         except Exception as e:
             devnull.close()
