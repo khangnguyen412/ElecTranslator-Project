@@ -22,7 +22,7 @@ async def app_exception_handler(request: Request, exc: AppException):
     """
     Handler for all custom application exceptions.
     """
-    error_response = ErrorResponse(success=False, status_code=exc.status_code, error_code=exc.error_code, message=exc.message, detail=exc.detail)
+    error_response = ErrorResponse(success=False, status_code=exc.status_code, error_code=exc.error_code, message=exc.message, error=exc.error)
     return JSONResponse(status_code=exc.status_code, content=error_response.model_dump())
 
 

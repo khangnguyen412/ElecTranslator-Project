@@ -24,10 +24,13 @@ export const requestStartBackendThunk = createAsyncThunk<{ startBackendStatus: s
     async (_, { rejectWithValue }) => {
         try {
             const response = await backendCheck();
-            console.log(response);
             return { startBackendStatus: { status: response.data.status, message: response.data.message || '' } };
         } catch (error: any) {
-            const errorData: ErrorType = error || { errors: "Start Backend Failed" };
+            const errorData: ErrorType = {
+                error_code: error?.error_code || "EXCEPTION",
+                message: error?.message || "Start Backend Failed",
+                error: error?.error || "Start Backend Failed"
+            };
             return rejectWithValue(errorData);
         }
     }
@@ -48,7 +51,7 @@ const StartSlice = createSlice({
         })
         builder.addCase(requestStartBackendThunk.fulfilled, (state, action) => {
             state.loading = false;
-            state.startBackend = action.payload.startBackendStatus || { status: 'idle', message: '' };
+            state.startBackend = action.payload.startBackendStatus;
         })
         builder.addCase(requestStartBackendThunk.rejected, (state, action) => {
             state.loading = false;

@@ -15,7 +15,7 @@ import type { ErrorType } from "@/types/error.type";
 export type TranslateState = {
     data: { text: string };
     loading: boolean;
-    error?: ErrorType['errors'] | null;
+    error?: ErrorType['error'] | null;
 }
 
 export const requestOllamaThunk = createAsyncThunk<{ data: { text: string } }, { promptParams: PromptParams }, { rejectValue: ErrorType }>(
@@ -25,7 +25,7 @@ export const requestOllamaThunk = createAsyncThunk<{ data: { text: string } }, {
             const response = await OllamaTranslate(data.promptParams);
             return response;
         } catch (error: any) {
-            const errorData: ErrorType = error?.data || { errors: "Translate Failed" };
+            const errorData: ErrorType = error?.data || { error: "Translate Failed" };
             return rejectWithValue(errorData);
         }
     }
@@ -49,7 +49,7 @@ const TranslateSlice = createSlice({
         })
         builder.addCase(requestOllamaThunk.rejected, (state, action) => {
             state.loading = false;
-            state.error = action?.payload?.errors;
+            state.error = action?.payload?.error;
         })
     }
 })

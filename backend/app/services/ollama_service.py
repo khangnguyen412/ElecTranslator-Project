@@ -83,7 +83,7 @@ class OllamaService:
             full_text = response.json()["message"]["content"]
             return OllamaTranslateResponse(text=full_text)
         except Exception as e:
-            raise AppException(error_code=400, status_code="BAD_REQUEST", message="Ollama server is not active", detail=str(e))
+            raise AppException(error_code=400, status_code="BAD_REQUEST", message="Ollama server is not active", error=str(e))
 
     @staticmethod
     async def check_active() -> OllamaStatusResponse | ErrorResponse:
@@ -97,9 +97,9 @@ class OllamaService:
             if response.status_code == 200:
                 return OllamaStatusResponse(status="success")
             else:
-                raise ServiceConnectionError(message="Ollama server is not active", detail=str(response.status_code))
+                raise ServiceConnectionError(message="Ollama server is not active", error=str(response.status_code))
         except Exception as e:
-            raise ServiceConnectionError(message="Ollama server is not active", detail=str(e))
+            raise ServiceConnectionError(message="Ollama server is not active", error=str(e))
 
     @staticmethod
     async def check_model() -> OllamaModelResponse | ErrorResponse:

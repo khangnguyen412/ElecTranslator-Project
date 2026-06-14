@@ -6,54 +6,30 @@ ElecTranslator
 │  ├─ app
 │  │  ├─ exceptions
 │  │  │  ├─ exceptions.py
-│  │  │  ├─ __init__.py
-│  │  │  └─ __pycache__
-│  │  │     ├─ custom_exceptions.cpython-311.pyc
-│  │  │     ├─ exceptions.cpython-311.pyc
-│  │  │     └─ __init__.cpython-311.pyc
+│  │  │  └─ __init__.py
 │  │  ├─ routers
 │  │  │  ├─ api_response.py
 │  │  │  ├─ ocr.py
 │  │  │  ├─ ollama.py
 │  │  │  ├─ translate.py
-│  │  │  ├─ __init__.py
-│  │  │  └─ __pycache__
-│  │  │     ├─ api_response.cpython-311.pyc
-│  │  │     ├─ ocr.cpython-311.pyc
-│  │  │     ├─ ollama.cpython-311.pyc
-│  │  │     ├─ translate.cpython-311.pyc
-│  │  │     └─ __init__.cpython-311.pyc
+│  │  │  └─ __init__.py
 │  │  ├─ schema
 │  │  │  ├─ error_schema.py
+│  │  │  ├─ health_schema.py
 │  │  │  ├─ ollama_schema.py
 │  │  │  ├─ orc_schema.py
 │  │  │  ├─ translate_schema.py
-│  │  │  ├─ __init__.py
-│  │  │  └─ __pycache__
-│  │  │     ├─ error_schema.cpython-311.pyc
-│  │  │     ├─ ollama_schema.cpython-311.pyc
-│  │  │     ├─ orc_schema.cpython-311.pyc
-│  │  │     ├─ translate_schema.cpython-311.pyc
-│  │  │     └─ __init__.cpython-311.pyc
+│  │  │  └─ __init__.py
 │  │  ├─ services
 │  │  │  ├─ ocr_service.py
 │  │  │  ├─ ollama_service.py
 │  │  │  ├─ translate_service.py
-│  │  │  ├─ __init__.py
-│  │  │  └─ __pycache__
-│  │  │     ├─ ocr_service.cpython-311.pyc
-│  │  │     ├─ ollama_service.cpython-311.pyc
-│  │  │     ├─ translate_service.cpython-311.pyc
-│  │  │     └─ __init__.cpython-311.pyc
-│  │  ├─ __init__.py
-│  │  └─ __pycache__
-│  │     └─ __init__.cpython-311.pyc
+│  │  │  └─ __init__.py
+│  │  └─ __init__.py
 │  ├─ main.py
 │  ├─ requirements.txt
-│  ├─ utils
-│  │  └─ check_dependencies.py
-│  └─ __pycache__
-│     └─ main.cpython-311.pyc
+│  └─ utils
+│     └─ check_dependencies.py
 ├─ frontend-app
 │  ├─ .env
 │  ├─ assets
@@ -129,25 +105,27 @@ ElecTranslator
 │  │  ├─ index.css
 │  │  ├─ main.tsx
 │  │  ├─ page
+│  │  │  ├─ CheckingPage.tsx
+│  │  │  ├─ FallbackPage.tsx
 │  │  │  ├─ layout
 │  │  │  │  └─ MainLayout.tsx
-│  │  │  ├─ LoadingPage.tsx
 │  │  │  └─ TranslationPanel.tsx
 │  │  ├─ redux
 │  │  │  ├─ features
-│  │  │  │  ├─ healthCheck.ts
+│  │  │  │  ├─ check.ts
+│  │  │  │  ├─ start.ts
 │  │  │  │  └─ translate.ts
 │  │  │  ├─ store.ts
 │  │  │  └─ types.ts
 │  │  ├─ routes
 │  │  │  └─ routes.tsx
 │  │  ├─ services
-│  │  │  ├─ HealthCheckServices.ts
+│  │  │  ├─ CheckServices.ts
 │  │  │  └─ TranslateServices.ts
 │  │  └─ types
+│  │     ├─ check.type.ts
 │  │     ├─ common.type.ts
 │  │     ├─ error.type.ts
-│  │     ├─ heathCheck.type.ts
 │  │     └─ translate.type.ts
 │  ├─ tsconfig.app.json
 │  ├─ tsconfig.json
@@ -155,4 +133,5 @@ ElecTranslator
 │  └─ vite.config.ts
 ├─ README.md
 └─ STRUCTURE.md
+
 ```
