@@ -17,7 +17,7 @@ export interface CheckState {
     ollamaStatus: ollamaStatus;
     pythonStatus: pythonStatus;
     pythonLibraryStatus: pythonLibStatus;
-    error: ErrorType | null;
+    error: ErrorType | undefined;
     message?: string;
 }
 
@@ -28,7 +28,11 @@ export const requestPythonCheckThunk = createAsyncThunk<{ pythonStatus: pythonSt
             const PythonVersion = await window.electronAPI.checkPythonVersion();
             return { pythonStatus: PythonVersion };
         } catch (error: any) {
-            const errorData: ErrorType = error || { errors: "Python Check Failed" };
+            const errorData: ErrorType = {
+                error_code: error?.error_code || "EXCEPTION",
+                message: error?.message || "Python Check Failed",
+                error: error?.error || "Python Check Failed",
+            };
             return rejectWithValue(errorData);
         }
     }
@@ -41,7 +45,11 @@ export const requestPythonLibraryCheckThunk = createAsyncThunk<{ pythonLibrarySt
             const PythonLibrary = await window.electronAPI.checkPythonLibraryRequirements();
             return { pythonLibraryStatus: PythonLibrary };
         } catch (error: any) {
-            const errorData: ErrorType = error || { errors: "Python Check Failed" };
+            const errorData: ErrorType = {
+                error_code: error?.error_code || "EXCEPTION",
+                message: error?.message || "Python Check Failed",
+                error: error?.error || "Python Check Failed",
+            };
             return rejectWithValue(errorData);
         }
     }
@@ -51,10 +59,14 @@ export const requestOllamaCheckThunk = createAsyncThunk<{ ollamaStatus: ollamaSt
     'healthCheck/requestOllamaCheck',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await ollamaCheck();
-            return { ollamaStatus: response.data };
+            const OllamaStatus = await ollamaCheck();
+            return { ollamaStatus: OllamaStatus.data };
         } catch (error: any) {
-            const errorData: ErrorType = error?.data || { errors: "Health Check Failed" };
+            const errorData: ErrorType = {
+                error_code: error?.error_code || "EXCEPTION",
+                message: error?.message || "Health Check Failed",
+                error: error?.error || "Health Check Failed",
+            };
             return rejectWithValue(errorData);
         }
     }
@@ -64,14 +76,47 @@ const CheckSlice = createSlice({
     name: 'check',
     initialState: {
         loading: false,
-        ollamaStatus: { status: 'idle', message: '', models: [] },
         pythonStatus: { status: 'idle', version: '', message: '' },
         pythonLibraryStatus: { status: 'idle', installed: [], missing: [], },
-        error: null,
+        ollamaStatus: { status: 'idle', message: '', models: [] },
+        error: undefined,
         message: undefined,
     } as CheckState,
     reducers: {},
     extraReducers: (builder) => {
+        /**
+         * Check Python Status
+         */
+        builder.addCase(requestPythonCheckThunk.pending, (state) => {
+            state.loading = true;
+        })
+        builder.addCase(requestPythonCheckThunk.fulfilled, (state, action) => {
+            state.loading = false;
+            state.pythonStatus = action.payload.pythonStatus;
+        })
+        builder.addCase(requestPythonCheckThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || { error_code: '', message: '', error: '' };
+        })
+
+        /**
+         * Check Python Library Status
+         */
+        builder.addCase(requestPythonLibraryCheckThunk.pending, (state) => {
+            state.loading = true;
+        })
+        builder.addCase(requestPythonLibraryCheckThunk.fulfilled, (state, action) => {
+            state.loading = false;
+            state.pythonLibraryStatus = action.payload.pythonLibraryStatus;
+        })
+        builder.addCase(requestPythonLibraryCheckThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || undefined;
+        })
+
+        /**
+         * Check Ollama Status
+         */
         builder.addCase(requestOllamaCheckThunk.pending, (state) => {
             state.loading = true;
         })
@@ -79,31 +124,10 @@ const CheckSlice = createSlice({
             state.loading = false;
             state.ollamaStatus = action.payload.ollamaStatus;
         })
-        builder.addCase(requestOllamaCheckThunk.rejected, (state) => {
+        builder.addCase(requestOllamaCheckThunk.rejected, (state, action) => {
             state.loading = false;
             state.ollamaStatus = { status: 'error' };
-        })
-        builder.addCase(requestPythonCheckThunk.pending, (state) => {
-            state.loading = true;
-        })
-        builder.addCase(requestPythonCheckThunk.fulfilled, (state, action) => {
-            state.loading = false;
-            state.pythonStatus = action.payload.pythonStatus || { status: 'idle', version: '', message: '' };
-        })
-        builder.addCase(requestPythonCheckThunk.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload || null;
-        })
-        builder.addCase(requestPythonLibraryCheckThunk.pending, (state) => {
-            state.loading = true;
-        })
-        builder.addCase(requestPythonLibraryCheckThunk.fulfilled, (state, action) => {
-            state.loading = false;
-            state.pythonLibraryStatus = action.payload.pythonLibraryStatus || { status: 'idle', installed: [], missing: [], };
-        })
-        builder.addCase(requestPythonLibraryCheckThunk.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload || null;
+            state.error = action.payload || undefined;
         })
     }
 })

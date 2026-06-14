@@ -63,29 +63,46 @@ const CheckingPage: React.FC = () => {
         try {
             // Step 1: Python Environment
             try {
-                const pythonResult = await dispatch(requestPythonCheckThunk(null)).unwrap();
+                const response = await dispatch(requestPythonCheckThunk(null)).unwrap();
+                if (response.pythonStatus?.status !== 'success') {
+                    setPythonStatus({
+                        status: 'error',
+                        message: response.pythonStatus?.message || ''
+                    });
+                    navigate('/error');
+                    return;
+                }
                 setPythonStatus({
                     status: 'success',
-                    version: pythonResult.pythonStatus?.version || '',
-                    message: pythonResult.pythonStatus?.message || ''
+                    version: response.pythonStatus?.version || '',
+                    message: response.pythonStatus?.message || ''
                 });
-            }
-            catch (e) {
+            } catch (e) {
                 setPythonStatus({ status: 'error' });
                 setTimeout(() => {
-                    setScenario('error');
+                    navigate('/error');
                 }, 3000);
                 throw e;
             }
 
             // Step 2: Python Library
             try {
-                const libResult = await dispatch(requestPythonLibraryCheckThunk(null)).unwrap();
+                const response = await dispatch(requestPythonLibraryCheckThunk(null)).unwrap();
+                if (response.pythonLibraryStatus?.status !== 'success') {
+                    setPythonLibraryStatus({
+                        status: 'error',
+                        installed: response.pythonLibraryStatus?.installed || [],
+                        missing: response.pythonLibraryStatus?.missing || [],
+                        message: response.pythonLibraryStatus?.message || ''
+                    });
+                    navigate('/error');
+                    return;
+                }
                 setPythonLibraryStatus({
                     status: 'success',
-                    installed: libResult.pythonLibraryStatus?.installed || [],
-                    missing: libResult.pythonLibraryStatus?.missing || [],
-                    message: libResult.pythonLibraryStatus?.message || ''
+                    installed: response.pythonLibraryStatus?.installed || [],
+                    missing: response.pythonLibraryStatus?.missing || [],
+                    message: response.pythonLibraryStatus?.message || ''
                 });
             } catch (e) {
                 setPythonLibraryStatus({ status: 'error', });
@@ -100,9 +117,9 @@ const CheckingPage: React.FC = () => {
             for (let i = 0; i < 15; i++) {
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
                 try {
-                    const check = await dispatch(requestStartBackendThunk(null)).unwrap();
-                    if (check.startBackendStatus?.status === 'success') {
-                        setStartBackendStatus(check.startBackendStatus);
+                    const response = await dispatch(requestStartBackendThunk(null)).unwrap();
+                    if (response.startBackendStatus?.status === 'success') {
+                        setStartBackendStatus(response.startBackendStatus);
                         break; // Exit loop if backend is ready
                     } else {
                         setStartBackendStatus({ status: 'error' });
@@ -114,8 +131,13 @@ const CheckingPage: React.FC = () => {
 
             // Step 4: Ollama API
             try {
-                await dispatch(requestOllamaCheckThunk(null)).unwrap();
-                setOllamaStatus({ status: 'success' });
+                const response = await dispatch(requestOllamaCheckThunk(null)).unwrap();
+                console.log(response);
+                if (response?.ollamaStatus?.status !== 'success') {
+                    setOllamaStatus({ status: 'error' });
+                } else {
+                    setOllamaStatus({ status: 'success' });
+                }
             } catch (e) {
                 setOllamaStatus({ status: 'error' });
                 setTimeout(() => {
@@ -234,7 +256,7 @@ const CheckingPage: React.FC = () => {
                             </Text>
                         </Col>
                         <Col>
-                            {startBackendStatus?.status === 'idle' && <Tag color="blue" style={{ fontSize: 10 }}>Checking...</Tag>}
+                            {startBackendStatus?.status === 'idle' && <Tag color="blue" style={{ fontSize: 10 }}>Waiting For Backend...</Tag>}
                             {startBackendStatus?.status === 'success' && <Tag color="green" style={{ fontSize: 10 }}>Ready</Tag>}
                             {startBackendStatus?.status === 'error' && <Tag color="red" style={{ fontSize: 10 }}>Unavailable</Tag>}
                         </Col>

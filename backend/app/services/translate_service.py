@@ -37,4 +37,4 @@ class TranslationService:
             translated_text = translator.translate(request.text)
             return TranslateResponse(success=True, text=translated_text)
         except Exception as e:
-            raise AppException(message="Translation failed", detail=str(e))
+            raise AppException(message="Translation failed", error=str(e))

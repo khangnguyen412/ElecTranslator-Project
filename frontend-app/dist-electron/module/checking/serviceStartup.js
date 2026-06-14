@@ -84,8 +84,9 @@ const startBackend = () => {
                             if (startupTimeout)
                                 clearTimeout(startupTimeout);
                             console.warn('[Backend Warning] Port 8000 is busy. Assuming it is our old instance or another service.');
-                            // Thay vì reject, ta có thể thử restart hoặc báo lỗi nhẹ
-                            // Ở đây ta chọn cách kill chính process vừa spawn và báo lỗi để người dùng biết
+                            /**
+                             * Kill the process if it's our old instance or another service
+                             */
                             exports.backendProcess?.kill();
                             exports.backendProcess = null;
                             reject(new Error('[Backend Error] Port 8000 is already in use. Please close other instances.'));
@@ -101,7 +102,9 @@ const startBackend = () => {
                 exports.backendProcess.stdout?.on('data', (data) => {
                     const log = data.toString().trim();
                     console.log(`[Backend Out] ${log}`);
-                    // Kiểm tra xem server đã start thành công chưa
+                    /**
+                     * Check if backend started successfully
+                     */
                     if (log.includes("Uvicorn running on") || log.includes("Application startup complete")) {
                         if (!isResolved) {
                             isResolved = true;
@@ -163,14 +166,19 @@ const stopBackend = async () => {
                 resolve();
             }
         });
-        // Gửi SIGINT để Uvicorn tắt gracefully
+        /**
+         * Send SIGINT to backend process to stop gracefully
+         */
         try {
             exports.backendProcess.kill('SIGINT');
         }
         catch (e) {
             console.error('Error sending SIGINT:', e);
         }
-        // Force kill sau 3 giây nếu chưa tắt
+        /**
+         * Force kill backend process if it's not stopped within 3 seconds
+         * Wait for backend process to stop gracefully
+         */
         setTimeout(() => {
             if (exports.backendProcess && !isKilled) {
                 console.log('Force killing backend...');
@@ -188,14 +196,20 @@ const stopBackend = async () => {
     });
 };
 exports.stopBackend = stopBackend;
-// Cleanup khi app đóng
+/**
+ * Setup Cleanup backend process when app closes
+ */
 const setupBackendCleanup = () => {
-    // Xử lý khi app đóng
+    /**
+     * Handle cleanup when app closes
+     */
     electron_1.app.on('before-quit', async () => {
         console.log('App is closing, stopping backend...');
         await (0, exports.stopBackend)();
     });
-    // Xử lý các tín hiệu terminate
+    /**
+     * Handle terminate signals
+     */
     process.on('SIGINT', async () => {
         console.log('Received SIGINT, stopping backend...');
         await (0, exports.stopBackend)();

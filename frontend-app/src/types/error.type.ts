@@ -1,6 +1,6 @@
 /* eslint-disable */
 export type ErrorType = {
-    code: string;
+    error_code: string;
     message: string;
-    errors?: any[] | string;
+    error?: any[] | string;
 }

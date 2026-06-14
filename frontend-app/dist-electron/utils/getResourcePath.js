@@ -14,32 +14,46 @@ const getResourceElectronPath = (baseDir, filePath) => {
     const isDev = process.env.NODE_ENV === 'development' || !electron_1.app.isPackaged;
     if (isDev) {
         const appPath = electron_1.app.getAppPath();
-        // Try 1: Direct join from app root
+        /**
+         * Direct join from app root
+         */
         const sourcePath = path_1.default.join(appPath, 'electron', 'module', baseDir, filePath);
         if (fs_1.default.existsSync(sourcePath)) {
             return sourcePath;
         }
-        // Try 2: Fallback using __dirname
+        /**
+         * Fallback using __dirname
+         */
         const dirname = path_1.default.join(__dirname.replace('dist-electron', 'electron').replace('dist', 'electron'), 'module', baseDir, filePath);
         if (fs_1.default.existsSync(dirname)) {
             return dirname;
         }
-        // Try 3: Last resort - current working directory
+        /**
+         * Last resort - current working directory
+         */
         return path_1.default.join(process.cwd(), 'electron', 'module', baseDir, filePath);
     }
     else {
-        // Production: resources copied to app.asar.unpacked or resourcesPath
+        /**
+         * Production: resources copied to app.asar.unpacked or resourcesPath
+         */
         return path_1.default.join(process.resourcesPath, baseDir, filePath);
     }
 };
 exports.getResourceElectronPath = getResourceElectronPath;
-// Get backend utils path
+/**
+ * Get backend utils path
+ */
 const getBackendUtilsPath = () => {
-    // In dev environment, __dirname is usually dist-electron/module/checking
-    // We need to go back 3 levels: checking -> module -> dist-electron -> frontend-app -> root -> backend/utils
+    /**
+     * In dev environment, __dirname is usually dist-electron/module/checking
+     * We need to go back 3 levels: checking -> module -> dist-electron -> frontend-app -> root -> backend/utils
+     */
     const devPath = path_1.default.join(__dirname, '../../../backend/utils/check_dependencies.py');
-    // Note: When building (packaging), the structure may change.
-    // You may need to copy check_dependencies.py to resources folder or handle production path separately.
+    /**
+     * Note: When building (packaging), the structure may change.
+     * You may need to copy check_dependencies.py to resources folder or handle production path separately.
+     */
     return devPath;
 };
 exports.getBackendUtilsPath = getBackendUtilsPath;

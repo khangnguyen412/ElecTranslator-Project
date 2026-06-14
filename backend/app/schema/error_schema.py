@@ -9,7 +9,7 @@ class ErrorResponse(BaseModel):
     status_code: int = Field(description="HTTP status code.")
     error_code: str = Field(default=None, description="Machine-readable error code for debugging.")
     message: str = Field(description="Human-readable error message.")
-    detail: str | None = Field(default=None, description="Detailed error information for debugging.")
+    error: str | None = Field(default=None, description="Detailed error information for debugging.")
     
     class Config:
         json_schema_extra = {
@@ -18,6 +18,6 @@ class ErrorResponse(BaseModel):
                 "status_code": 404,
                 "error_code": "NOT_FOUND",
                 "message": "Resource not found",
-                "detail": "The requested resource was not found on the server."
+                "error": "The requested resource was not found on the server."
             }
         }

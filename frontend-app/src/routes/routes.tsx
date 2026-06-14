@@ -19,6 +19,10 @@ export const routes: RouteObject[] = [
         element: <FallbackPage scenario="fallback" />,
     },
     {
+        path: '/error',
+        element: <FallbackPage scenario="error" />,
+    },
+    {
         path: '/translate',
         element: <TranslationPage defaultTranslate={false} />,
     }

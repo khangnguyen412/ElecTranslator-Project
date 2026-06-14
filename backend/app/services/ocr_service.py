@@ -170,4 +170,4 @@ class PaddleOCRService:
             return OCRResponse(text=" ".join(texts))
 
         except Exception as e:
-            raise AppException(message="OCR failed", detail=str(e))
+            raise AppException(message="OCR failed", error=str(e))

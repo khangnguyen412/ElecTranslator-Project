@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -99,7 +99,7 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
                                     )}
                                 </React.Fragment>
                             ) : (
-                                <Text>Waiting for Ollama</Text>
+                                <Text>Waiting for Backend</Text>
                             )}
                         </Space>
                         <Space>
@@ -110,7 +110,7 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
                                     {ollamaStatusState?.status !== 'error' ? (
                                         <Text type="success">Running</Text>
                                     ) : (
-                                        <Text type="danger">{ollamaStatusState?.status}</Text>
+                                        <Text type="danger">Ollama not running</Text>
                                     )}
                                 </React.Fragment>
                             ) : (
@@ -135,7 +135,7 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
         ),
         extra: (
             <React.Fragment>
-                <Space wrap orientation="vertical">
+                <Space wrap orientation="vertical" style={{ width: '100%' }}>
                     {scenario == 'fallback' && (
                         <Button key="continue" type="primary" size="large" onClick={() => { navigate('/translate', { state: { defaultTranslate: true } }); }} icon={<RocketOutlined />} style={{ width: '100%' }}                        >
                             Continue with default translate
@@ -144,7 +144,7 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
                     <Button key="retry" size="large" onClick={() => { navigate('/'); }} icon={<ReloadOutlined />} style={{ width: '100%' }}                        >
                         Retry System Check
                     </Button>
-                    <Button key="retry" size="large" onClick={() => { }} icon={<QuestionCircleOutlined />} style={{ width: '100%' }}                        >
+                    <Button key="how-to-fix" type="primary" size="large" onClick={() => { }} icon={<QuestionCircleOutlined />} style={{ width: '100%' }}                        >
                         How to fix
                     </Button>
                 </Space>
