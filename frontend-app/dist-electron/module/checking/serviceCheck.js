@@ -67,13 +67,18 @@ const checkPythonVersion = async () => {
 exports.checkPythonVersion = checkPythonVersion;
 /**
  * Check if required Python libraries are installed
- * @param requirements List of required Python libraries
  * @returns Promise<any>
  */
-const checkPythonLibraryRequirements = async (requirements) => {
+const checkPythonLibraryRequirements = async () => {
     return new Promise((resolve) => {
-        const scriptPath = (0, getResourcePath_1.getResourcePythonPath)('/module/checkLibrary.py');
-        const python = (0, child_process_1.spawn)('python', [scriptPath, ...requirements], { shell: true });
+        /**
+         * Get backend/utils/check_deps.py path
+         */
+        const scriptPath = (0, getResourcePath_1.getBackendUtilsPath)();
+        /**
+         * Spawn python process to check check_deps.py
+         */
+        const python = (0, child_process_1.spawn)('python', [scriptPath], { shell: true });
         let output = '';
         python.stdout.on('data', (d) => { output += d.toString(); });
         let errorOutput = '';
@@ -81,26 +86,29 @@ const checkPythonLibraryRequirements = async (requirements) => {
         python.on('close', (code) => {
             try {
                 if (!output.trim()) {
-                    throw new Error('Empty output from Python script');
+                    throw new Error(`Empty output from Python script. Error: ${errorOutput}`);
                 }
                 const res = JSON.parse(output.trim());
+                const missing = res.missing || [];
+                const installed = res.installed || [];
                 resolve({
-                    status: Object.values(res).every(Boolean) ? 'success' : 'error',
-                    installed: Object.entries(res).filter(([, v]) => v).map(([k]) => k),
-                    missing: Object.entries(res).filter(([, v]) => !v).map(([k]) => k)
+                    status: missing.length === 0 ? 'success' : 'error',
+                    installed: installed,
+                    missing: missing
                 });
             }
             catch (error) {
+                console.error("Dependency check error:", errorOutput);
                 resolve({
                     status: 'error',
                     installed: [],
-                    missing: requirements
+                    missing: ["fastapi", "uvicorn"] // Fallback list
                 });
             }
         });
         setTimeout(() => {
             python.kill();
-            resolve({ status: 'timeout', installed: [], missing: requirements });
+            resolve({ status: 'timeout', installed: [], missing: [] });
         }, 5000);
     });
 };

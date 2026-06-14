@@ -16,7 +16,7 @@ const electron_devtools_installer_1 = require("@tomjs/electron-devtools-installe
 const screenshot_1 = require("./module/screenshot/screenshot");
 const ocrRead_1 = require("./module/orc/ocrRead");
 const serviceCheck_1 = require("./module/checking/serviceCheck");
-const parseRequirement_1 = require("./utils/parseRequirement");
+const serviceStartup_1 = require("./module/checking/serviceStartup");
 /**
  * Check if application is running in development mode
  */
@@ -30,10 +30,18 @@ electron_1.ipcMain.handle('check-python-version', async () => {
         return error;
     }
 });
+electron_1.ipcMain.handle('start-backend', async () => {
+    try {
+        await (0, serviceStartup_1.startBackend)();
+        return { status: 'success' };
+    }
+    catch (error) {
+        return { status: 'error', message: error };
+    }
+});
 electron_1.ipcMain.handle('check-python-library-requirements', async (event) => {
     try {
-        const requirements = (0, parseRequirement_1.parseRequirement)();
-        const response = await (0, serviceCheck_1.checkPythonLibraryRequirements)(requirements);
+        const response = await (0, serviceCheck_1.checkPythonLibraryRequirements)();
         return response;
     }
     catch (error) {
@@ -124,4 +132,5 @@ electron_1.app.on('will-quit', () => {
             ocrRead_1.pythonProcesses[lang].kill();
         }
     }
+    (0, serviceStartup_1.setupBackendCleanup)();
 });

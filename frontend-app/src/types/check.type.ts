@@ -15,6 +15,9 @@ export type pythonLibStatus = {
 
 export type ollamaStatus = {
     status: status;
+}
+
+export type startBackend = {
+    status: status;
     message?: string;
-    models?: string[];
 }

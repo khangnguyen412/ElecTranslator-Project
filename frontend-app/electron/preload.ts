@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     /**
      * OCR Image Python
+     * @Deprecated
      */
     ocrImagePython: (base64Data: string, lang: string) => ipcRenderer.invoke('ocr-image-python', base64Data, lang),
 
@@ -19,11 +20,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
      */
     checkPythonVersion: () => ipcRenderer.invoke('check-python-version'),
     checkPythonLibraryRequirements: () => ipcRenderer.invoke('check-python-library-requirements'),
+    startBackend: () => ipcRenderer.invoke('start-backend'),
 
     /**
-     * Trigger Translate
+     * Trigger Capture
      */
-    onTriggerTranslate: (callback: () => void) => ipcRenderer.on('trigger-translate', callback),
-    removeTriggerTranslate: (callback: () => void) => ipcRenderer.removeListener('trigger-translate', callback)
+    onTriggerCapture: (callback: () => void) => ipcRenderer.on('trigger-translate', callback),
+    removeTriggerCapture: (callback: () => void) => ipcRenderer.removeListener('trigger-translate', callback)
 
 })

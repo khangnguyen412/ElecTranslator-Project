@@ -11,6 +11,7 @@ interface Window {
          */
         checkPythonVersion: () => Promise<{ status: status; version?: string; message?: string; }>
         checkPythonLibraryRequirements: () => Promise<{ status: status; installed?: string[]; missing?: string[]; message?: string; }>
+        startBackend: () => Promise<void>
 
         /**
          * OCR Image Python
@@ -20,7 +21,7 @@ interface Window {
         /**
          * Trigger Translate
          */
-        onTriggerTranslate: (callback: () => void) => void
-        removeTriggerTranslate: (callback: () => void) => void
+        onTriggerCapture: (callback: () => void) => void
+        removeTriggerCapture: (callback: () => void) => void
     }
 }

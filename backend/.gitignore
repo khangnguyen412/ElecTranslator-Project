@@ -1,0 +1,66 @@
+# ==========================================
+# ElecTranslator Backend .gitignore
+# ==========================================
+
+# 1. Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 2. Virtual Environments (Rất quan trọng)
+venv/
+.venv/
+env/
+ENV/
+.conda/
+
+# 3. Environment Variables (Bảo mật)
+.env
+.env.local
+.env.*.local
+
+# 4. IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 5. Logs & Runtime
+*.log
+logs/
+uvicorn.pid
+*.sqlite3
+
+# 6. Distribution & Build
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# 7. Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# 8. Type Checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# 9. Jupyter (nếu có dùng để test model)
+.ipynb_checkpoints/
+
+# 10. OCR / ML Model Local Cache 
+# (Lưu ý: EasyOCR/PaddleOCR thường tải model về thư mục home của user như ~/.EasyOCR, 
+# nhưng nếu bạn cấu hình tải về thẳng thư mục backend, hãy bỏ comment các dòng dưới)
+# .paddleocr/
+# .EasyOCR/
+# *.pth
+# *.onnx

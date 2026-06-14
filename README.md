@@ -8,11 +8,17 @@ This project for ElecTranslator:
 ```
 pip install -r requirements.txt
 ```
-- Create ./frontend-app/dist and run project:
+- Create ./frontend-app/dist 
+- Run frontend:
 ```
 cd ./frontend-app/
 pnpm install
 pnpm dev
+```
+- Run backend:
+```
+cd ./backend/
+uvicorn main:app --reload --port 8000
 ```
 
 ## Technology in project:
@@ -20,83 +26,3 @@ pnpm dev
 - Framework: React, Electron
 - OCR: EasyOCR
 - Engine Translation: Ollama + Gemma3
-
-## Project structure 
-```
-electranslator-project/
-├── README.md
-└── frontend-app/
-    ├── README.md
-    ├── electron-builder.json
-    ├── eslint.config.js
-    ├── index.html
-    ├── package.json
-    ├── pnpm-workspace.yaml
-    ├── tsconfig.app.json
-    ├── tsconfig.json
-    ├── tsconfig.node.json
-    ├── vite.config.ts
-    ├── dist-electron/
-    │   ├── main.js
-    │   ├── preload.js
-    │   └── module/
-    │       ├── orc/
-    │       │   └── ocr-read.js
-    │       └── screenshot/
-    │           └── screenshot.js
-    ├── electron/
-    │   ├── README.md
-    │   ├── main.ts
-    │   ├── preload.ts
-    │   ├── tsconfig.json
-    │   └── module/
-    │       ├── orc/
-    │       │   └── ocr-read.ts
-    │       └── screenshot/
-    │           ├── screenshot.ts
-    │           └── selection-overlay.html
-    ├── python/
-    │   ├── requirements.txt
-    │   └── module/
-    │       ├── paddleORC.py
-    │       └── translate.py
-    └── src/
-        ├── App.css
-        ├── App.tsx
-        ├── DefaultTemplate.tsx
-        ├── env.d.ts
-        ├── index.css
-        ├── main.tsx
-        ├── api/
-        │   └── axios.ts
-        ├── assets/
-        │   └── scss/
-        │       └── loading.scss
-        ├── components/
-        │   └── Popup.tsx
-        ├── config/
-        │   ├── app.config.ts
-        │   └── language.config.ts
-        ├── page/
-        │   ├── LoadingPage.tsx
-        │   ├── TranslationPanel.tsx
-        │   └── layout/
-        │       └── MainLayout.tsx
-        ├── redux/
-        │   ├── store.ts
-        │   ├── types.ts
-        │   └── features/
-        │       ├── healthCheck.ts
-        │       └── translate.ts
-        ├── routes/
-        │   └── routes.tsx
-        ├── services/
-        │   ├── HealthCheckServices.ts
-        │   ├── PromptService.ts
-        │   └── TranslateServices.ts
-        └── types/
-            ├── common.type.ts
-            ├── error.type.ts
-            ├── heathCheck.type.ts
-            └── translate.type.ts
-```

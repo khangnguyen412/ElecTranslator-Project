@@ -83,16 +83,17 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
 
             // Set ocrText state with extractedText
             const requestParams: PromptParams = {
-                text_type: category || 'default',
-                tone: tone || 'casual',
+                model: 'translategemma:12b',
+                text: extractedText || '',
                 source_lang: getLangNameByLang(sourceLang || '')?.langName || 'English',
                 source_code: getLangCodeByLang(sourceLang || '')?.langCode || 'en',
                 target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
                 target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
-                source_text: extractedText || '',
+                category: category || 'default',
+                tone: tone || 'casual',
             }
-            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams})).unwrap();
-            setResultText(response.data?.message?.content || '');
+            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams })).unwrap();
+            setResultText(response.data.text || '');
             message.success('Translation successful!');
         } catch (error: any) {
             message.error(`Translation error: ${error.message}`);
@@ -112,16 +113,16 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                 throw new Error("Please select source, target, and category.");
             }
             const requestParams: PromptParams = {
-                text_type: category || 'default',
+                category: category || 'default',
                 tone: tone || 'casual',
                 source_lang: getLangNameByLang(sourceLang || '')?.langName || 'English',
                 source_code: getLangCodeByLang(sourceLang || '')?.langCode || 'en',
                 target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
                 target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
-                source_text: sourceText || '',
+                text: sourceText || '',
             }
-            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams})).unwrap();
-            setResultText(response.data?.message?.content || '');
+            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams })).unwrap();
+            setResultText(response.data.text || '');
             message.success('Translation successful!');
         }
         catch (error: any) {
@@ -208,9 +209,9 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
 
     useEffect(() => {
         const handler = () => handleTranslateRef.current();
-        window.electronAPI?.onTriggerTranslate(handler);
+        window.electronAPI?.onTriggerCapture(handler);
         return () => {
-            window.electronAPI?.removeTriggerTranslate(handler);
+            window.electronAPI?.removeTriggerCapture(handler);
         };
     }, []);
 

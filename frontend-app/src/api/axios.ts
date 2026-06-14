@@ -6,7 +6,7 @@ axios.defaults.withCredentials = true;
 
 // Create axios instance for API requests
 export const API = axios.create({
-    baseURL: AppConfig.OllamaApiUrl,
+    baseURL: AppConfig.ApiUrl,
     headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -19,27 +19,23 @@ API.interceptors.response.use(
         return response.data
     },
     (error) => {
-        if (error.response?.status === 401 && !error.config.url.includes('/login')) {
-            window.location.href = '/login';
-            localStorage.removeItem('profile');
-        }
         return Promise.reject(error.response?.data || { errors: "Error" });
     }
 );
 
 export const postRequest = (endpoint: string, payload: object = {}, config: object = {}) => {
-    return API.post(`${AppConfig.OllamaApiUrl}${endpoint}`, payload, config);
+    return API.post(`${AppConfig.ApiUrl}${endpoint}`, payload, config);
 };
 
-export const getRequest = (url: string, endpoint: string, config: object = {}) => {
-    return API.get(`${url?url:AppConfig.OllamaApiUrl}${endpoint}`, config);
+export const getRequest = (endpoint: string, config: object = {}) => {
+    return API.get(`${AppConfig.ApiUrl}${endpoint}`, config);
 };
 
 export const putRequest = (endpoint: string, payload: object = {}, config: object = {}) => {
-    return API.put(`${AppConfig.OllamaApiUrl}${endpoint}`, payload, config);
+    return API.put(`${AppConfig.ApiUrl}${endpoint}`, payload, config);
 };
 
 export const deleteRequest = (endpoint: string, config: object = {}) => {
-    return API.delete(`${AppConfig.OllamaApiUrl}${endpoint}`, config);
+    return API.delete(`${AppConfig.ApiUrl}${endpoint}`, config);
 };
 

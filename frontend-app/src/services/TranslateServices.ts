@@ -4,11 +4,11 @@ import { getRequest, postRequest } from '@/api/axios';
 /**
  * Type
  */
-import type { Prompt } from "@/types/translate.type";
+import type { PromptParams } from "@/types/translate.type";
 
-export const OllamaTranslate = async (payload: Prompt): Promise<any> => {
+export const OllamaTranslate = async (payload: PromptParams): Promise<any> => {
     try {
-        return await postRequest('/chat', payload, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
+        return await postRequest('/ollama/translate', payload, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
     } catch (error) {
         throw error
     }
@@ -18,7 +18,7 @@ export const NormalTranslate = async (payload: { sourceLanguage: string, targetL
     try {
         const url = `https://lingva.ml/api/v1` ;
         const endpoint = `${payload.sourceLanguage}/${payload.targetLanguage}/${encodeURIComponent(payload.text)}`;
-        return await getRequest(url, endpoint);
+        return await getRequest(endpoint);
     } catch (err) {
         throw err
     }
