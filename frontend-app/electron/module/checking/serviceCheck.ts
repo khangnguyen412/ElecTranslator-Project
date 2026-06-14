@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { spawn } from "child_process";
 
-import { getResourcePythonPath } from '../../utils/getResourcePath'
+import { getBackendUtilsPath } from '../../utils/getResourcePath'
 
 export const checkPythonVersion = async (): Promise<any> => {
     const conmands = ['python3', 'python'];
@@ -61,15 +61,22 @@ export const checkPythonVersion = async (): Promise<any> => {
     return { status: 'error', message: 'not found python in system' };
 }
 
+
 /**
  * Check if required Python libraries are installed
- * @param requirements List of required Python libraries
  * @returns Promise<any>
  */
-export const checkPythonLibraryRequirements = async (requirements: string[]): Promise<any> => {
+export const checkPythonLibraryRequirements = async (): Promise<any> => {
     return new Promise((resolve) => {
-        const scriptPath = getResourcePythonPath('/module/checkLibrary.py');
-        const python = spawn('python', [scriptPath, ...requirements], { shell: true });
+        /**
+         * Get backend/utils/check_deps.py path
+         */
+        const scriptPath = getBackendUtilsPath();
+
+        /**
+         * Spawn python process to check check_deps.py
+         */
+        const python = spawn('python', [scriptPath], { shell: true });
 
         let output = '';
         python.stdout.on('data', (d) => { output += d.toString(); });
@@ -80,26 +87,31 @@ export const checkPythonLibraryRequirements = async (requirements: string[]): Pr
         python.on('close', (code) => {
             try {
                 if (!output.trim()) {
-                    throw new Error('Empty output from Python script');
+                    throw new Error(`Empty output from Python script. Error: ${errorOutput}`);
                 }
-                const res: Record<string, boolean> = JSON.parse(output.trim());
+                const res = JSON.parse(output.trim());
+
+                const missing = res.missing || [];
+                const installed = res.installed || [];
+
                 resolve({
-                    status: Object.values(res).every(Boolean) ? 'success' : 'error',
-                    installed: Object.entries(res).filter(([, v]) => v).map(([k]) => k),
-                    missing: Object.entries(res).filter(([, v]) => !v).map(([k]) => k)
+                    status: missing.length === 0 ? 'success' : 'error',
+                    installed: installed,
+                    missing: missing
                 });
             } catch (error: any) {
+                console.error("Dependency check error:", errorOutput);
                 resolve({
                     status: 'error',
                     installed: [],
-                    missing: requirements
+                    missing: ["fastapi", "uvicorn"] // Fallback list
                 });
             }
         })
 
         setTimeout(() => {
             python.kill();
-            resolve({ status: 'timeout', installed: [], missing: requirements });
+            resolve({ status: 'timeout', installed: [], missing: [] });
         }, 5000);
     })
 }

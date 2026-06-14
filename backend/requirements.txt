@@ -1,0 +1,26 @@
+# ==========================================
+# ElecTranslator Backend Dependencies
+# ==========================================
+
+# --- 1. Web Framework & API ---
+fastapi==0.110.0
+uvicorn[standard]==0.27.0
+pydantic==2.6.0
+python-multipart==0.0.9
+httpx==0.26.0
+
+# --- 2. Image Processing ---
+Pillow==10.2.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# --- 3. OCR Engines ---
+paddleocr>=2.7.0
+easyocr>=1.7.0
+
+# --- 4. Translation ---
+deep-translator>=1.11.0 
+
+# --- 5. Utilities ---
+python-dotenv>=1.0.0
+requests>=2.31.0

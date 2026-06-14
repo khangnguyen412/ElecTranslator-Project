@@ -1,13 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import TranslateSlice from '@/redux/features/translate';
-import HealthCheckSlice from '@/redux/features/healthCheck';
+import CheckSlice from '@/redux/features/check';
+import StartSlice from '@/redux/features/start';
 
 
 export const store = configureStore({
     reducer: {
         translate: TranslateSlice,
-        healthCheck: HealthCheckSlice,
+        check: CheckSlice,
+        start: StartSlice,
     },
 });
 

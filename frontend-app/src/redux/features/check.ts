@@ -4,15 +4,15 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 /**
  * Service
  */
-import { healthCheck } from "@/services/HealthCheckServices";
+import { ollamaCheck } from "@/services/CheckServices";
 
 /**
  * Type
  */
-import type { pythonStatus, pythonLibStatus, ollamaStatus } from "@/types/heathCheck.type";
+import type { pythonStatus, pythonLibStatus, ollamaStatus } from "@/types/check.type";
 import type { ErrorType } from "@/types/error.type";
 
-export interface OllamaState {
+export interface CheckState {
     loading: boolean;
     ollamaStatus: ollamaStatus;
     pythonStatus: pythonStatus;
@@ -20,19 +20,6 @@ export interface OllamaState {
     error: ErrorType | null;
     message?: string;
 }
-
-export const requestOllamaCheckThunk = createAsyncThunk<{ ollamaStatus: ollamaStatus }, null, { rejectValue: ErrorType }>(
-    'healthCheck/requestOllamaCheck',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await healthCheck();
-            return { ollamaStatus: response?.models?.length ? { status: 'success', models: response.models } : { status: 'error' } };
-        } catch (error: any) {
-            const errorData: ErrorType = error?.data || { errors: "Health Check Failed" };
-            return rejectWithValue(errorData);
-        }
-    }
-)
 
 export const requestPythonCheckThunk = createAsyncThunk<{ pythonStatus: pythonStatus }, null, { rejectValue: ErrorType }>(
     'healthCheck/requestPythonCheck',
@@ -60,8 +47,21 @@ export const requestPythonLibraryCheckThunk = createAsyncThunk<{ pythonLibrarySt
     }
 )
 
-const HealthCheckSlice = createSlice({
-    name: 'healthCheck',
+export const requestOllamaCheckThunk = createAsyncThunk<{ ollamaStatus: ollamaStatus }, null, { rejectValue: ErrorType }>(
+    'healthCheck/requestOllamaCheck',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await ollamaCheck();
+            return { ollamaStatus: response.data };
+        } catch (error: any) {
+            const errorData: ErrorType = error?.data || { errors: "Health Check Failed" };
+            return rejectWithValue(errorData);
+        }
+    }
+)
+
+const CheckSlice = createSlice({
+    name: 'check',
     initialState: {
         loading: false,
         ollamaStatus: { status: 'idle', message: '', models: [] },
@@ -69,7 +69,7 @@ const HealthCheckSlice = createSlice({
         pythonLibraryStatus: { status: 'idle', installed: [], missing: [], },
         error: null,
         message: undefined,
-    } as OllamaState,
+    } as CheckState,
     reducers: {},
     extraReducers: (builder) => {
         builder.addCase(requestOllamaCheckThunk.pending, (state) => {
@@ -79,9 +79,9 @@ const HealthCheckSlice = createSlice({
             state.loading = false;
             state.ollamaStatus = action.payload.ollamaStatus;
         })
-        builder.addCase(requestOllamaCheckThunk.rejected, (state, action) => {
+        builder.addCase(requestOllamaCheckThunk.rejected, (state) => {
             state.loading = false;
-            state.ollamaStatus = { status: 'error', message: action.payload?.errors as string };
+            state.ollamaStatus = { status: 'error' };
         })
         builder.addCase(requestPythonCheckThunk.pending, (state) => {
             state.loading = true;
@@ -107,4 +107,4 @@ const HealthCheckSlice = createSlice({
         })
     }
 })
-export default HealthCheckSlice.reducer;
+export default CheckSlice.reducer;

@@ -11,6 +11,7 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     captureScreen: () => electron_1.ipcRenderer.invoke('capture-screen'),
     /**
      * OCR Image Python
+     * @Deprecated
      */
     ocrImagePython: (base64Data, lang) => electron_1.ipcRenderer.invoke('ocr-image-python', base64Data, lang),
     /**
@@ -18,9 +19,10 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
      */
     checkPythonVersion: () => electron_1.ipcRenderer.invoke('check-python-version'),
     checkPythonLibraryRequirements: () => electron_1.ipcRenderer.invoke('check-python-library-requirements'),
+    startBackend: () => electron_1.ipcRenderer.invoke('start-backend'),
     /**
-     * Trigger Translate
+     * Trigger Capture
      */
-    onTriggerTranslate: (callback) => electron_1.ipcRenderer.on('trigger-translate', callback),
-    removeTriggerTranslate: (callback) => electron_1.ipcRenderer.removeListener('trigger-translate', callback)
+    onTriggerCapture: (callback) => electron_1.ipcRenderer.on('trigger-translate', callback),
+    removeTriggerCapture: (callback) => electron_1.ipcRenderer.removeListener('trigger-translate', callback)
 });

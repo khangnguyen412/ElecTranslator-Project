@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
 import path from "path";
+import { spawn } from 'child_process';
 
 /**
  * React Developer Tools
@@ -13,7 +14,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
 import { captureRegionInteractive } from './module/screenshot/screenshot'
 import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocrRead";
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
-import { parseRequirement } from "./utils/parseRequirement";
+import { startBackend, setupBackendCleanup } from "./module/checking/serviceStartup";
 
 /**
  * Check if application is running in development mode
@@ -29,10 +30,18 @@ ipcMain.handle('check-python-version', async () => {
     }
 });
 
+ipcMain.handle('start-backend', async () => {
+    try {
+        await startBackend();
+        return { status: 'success' };
+    } catch (error) {
+        return { status: 'error', message: error };
+    }
+});
+
 ipcMain.handle('check-python-library-requirements', async (event) => {
     try {
-        const requirements = parseRequirement();
-        const response = await checkPythonLibraryRequirements(requirements);
+        const response = await checkPythonLibraryRequirements();
         return response;
     } catch (error: any) {
         return { message: error };
@@ -131,4 +140,6 @@ app.on('will-quit', () => {
             pythonProcesses[lang].kill();
         }
     }
+
+    setupBackendCleanup();
 });
