@@ -54,13 +54,11 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-# 9. Jupyter (nếu có dùng để test model)
+# 9. Jupyter ()
 .ipynb_checkpoints/
 
 # 10. OCR / ML Model Local Cache 
-# (Lưu ý: EasyOCR/PaddleOCR thường tải model về thư mục home của user như ~/.EasyOCR, 
-# nhưng nếu bạn cấu hình tải về thẳng thư mục backend, hãy bỏ comment các dòng dưới)
-# .paddleocr/
-# .EasyOCR/
-# *.pth
-# *.onnx
+.paddleocr/
+.EasyOCR/
+*.pth
+*.onnx

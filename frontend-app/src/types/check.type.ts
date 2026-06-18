@@ -13,11 +13,12 @@ export type pythonLibStatus = {
     message?: string;
 }
 
-export type ollamaStatus = {
+export type startBackend = {
     status: status;
+    message?: string;
 }
 
-export type startBackend = {
+export type ollamaStatus = {
     status: status;
     message?: string;
 }

@@ -2,16 +2,16 @@ export interface LanguageConfig {
     lang: string | undefined;
     langName: string | undefined;
     langCode: string | undefined;
-    orcCode: string | undefined;
+    ocrCode: string | undefined;
 }
 
 export const LANG_MAP: LanguageConfig[] = [
-    { lang: 'chinese_simplified', langName: 'Chinese (Simplified)', langCode: 'zh-Hans', orcCode: 'ch' },
-    { lang: 'chinese_traditional', langName: 'Chinese (Traditional)', langCode: 'zh-Hant', orcCode: 'chinese_cht' },
-    { lang: 'english', langName: 'English', langCode: 'en', orcCode: 'en' },
-    { lang: 'japanese', langName: 'Japanese', langCode: 'ja', orcCode: 'japan' },
-    { lang: 'korean', langName: 'Korean', langCode: 'ko', orcCode: 'korean' },
-    { lang: 'vietnamese', langName: 'Vietnamese', langCode: 'vi', orcCode: 'vi' },
+    { lang: 'chinese_simplified', langName: 'Chinese (Simplified)', langCode: 'zh-Hans', ocrCode: 'ch' },
+    { lang: 'chinese_traditional', langName: 'Chinese (Traditional)', langCode: 'zh-Hant', ocrCode: 'chinese_cht' },
+    { lang: 'english', langName: 'English', langCode: 'en', ocrCode: 'en' },
+    { lang: 'japanese', langName: 'Japanese', langCode: 'ja', ocrCode: 'japan' },
+    { lang: 'korean', langName: 'Korean', langCode: 'ko', ocrCode: 'korean' },
+    { lang: 'vietnamese', langName: 'Vietnamese', langCode: 'vi', ocrCode: 'vi' },
 ]
 
 /**
@@ -19,7 +19,7 @@ export const LANG_MAP: LanguageConfig[] = [
  * @param ocrCode - OCR code
  * @returns Language config
  * */
-export const getLanguageByOcrCode = (ocrCode: string): LanguageConfig | undefined => LANG_MAP.find((item) => item.orcCode === ocrCode);
+export const getLanguageByOcrCode = (ocrCode: string): LanguageConfig | undefined => LANG_MAP.find((item) => item.ocrCode === ocrCode);
 
 /**
  * Get OCR code by language

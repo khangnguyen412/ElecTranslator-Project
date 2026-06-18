@@ -12,11 +12,13 @@ import { CopyOutlined, CameraOutlined, SettingOutlined, TranslationOutlined } fr
  */
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
+import { requestORCThunk } from '@/redux/features/orc';
 import { requestOllamaThunk } from '@/redux/features/translate';
 
 /**
  * Type
  */
+import type { OCRRequest, OCRResponse } from "@/types/ocr.type";
 import type { PromptParams } from "@/types/translate.type";
 
 /**
@@ -62,38 +64,48 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
             if (!sourceLang || !targetLang || !category) {
                 throw new Error("Please select source, target.");
             }
+
             const result = await window.electronAPI.captureScreen();
             if (result.error) {
                 throw new Error(result.error);
             }
-            const ocrResult: any = await window.electronAPI.ocrImagePython(result.base64, [getOcrCodeByLang(sourceLang || '')?.orcCode || 'en']);
+
+            const ocrRequestParams: OCRRequest = {
+                model: defaultTranslate ? undefined : 'translategemma:12b',
+                base64_text: result.base64,
+                ocr_lang: getOcrCodeByLang(sourceLang || '')?.ocrCode || 'en',
+                source_lang: getLangNameByLang(sourceLang || '')?.langName || 'English',
+                source_code: getLangCodeByLang(sourceLang || '')?.langCode || 'en',
+                target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
+                target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
+                category: defaultTranslate ? undefined : category || 'default',
+                tone: defaultTranslate ? undefined : tone || 'casual',
+            }
+            const ocrResult: OCRResponse = await dispatch(requestORCThunk(ocrRequestParams)).unwrap();
 
             // check ocrResult is valid
-            if (!ocrResult || ocrResult.success === false || ocrResult.error) {
-                throw new Error(ocrResult?.error || "Failed to process OCR result.");
+            if (!ocrResult || !ocrResult.data?.source_text) {
+                throw new Error(ocrResult?.message || "Failed to process OCR result.");
             }
 
             // extract text from ocrResult.text
-            const extractedText = ocrResult.text;
+            const extractedText = ocrResult.data.source_text;
             if (!extractedText || !extractedText.trim()) {
                 throw new Error("Failed to extract text from image.");
             }
 
             setSourceText(extractedText);
 
-            // Set ocrText state with extractedText
-            const requestParams: PromptParams = {
-                model: 'translategemma:12b',
-                text: extractedText || '',
-                source_lang: getLangNameByLang(sourceLang || '')?.langName || 'English',
-                source_code: getLangCodeByLang(sourceLang || '')?.langCode || 'en',
-                target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
-                target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
-                category: category || 'default',
-                tone: tone || 'casual',
+            if (!ocrResult || !ocrResult.data?.translated_text) {
+                throw new Error(ocrResult?.message || "Failed to process OCR result.");
             }
-            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams })).unwrap();
-            setResultText(response.data.text || '');
+
+            // extract text from ocrResult.text
+            const translatedText = ocrResult.data.translated_text;
+            if (!translatedText || !translatedText.trim()) {
+                throw new Error("Failed to extract text from image.");
+            }
+            setResultText(ocrResult.data.translated_text || '');
             message.success('Translation successful!');
         } catch (error: any) {
             message.error(`Translation error: ${error.message}`);
@@ -113,16 +125,20 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                 throw new Error("Please select source, target, and category.");
             }
             const requestParams: PromptParams = {
-                category: category || 'default',
-                tone: tone || 'casual',
+                model: 'translategemma:12b',
+                text: sourceText || '',
                 source_lang: getLangNameByLang(sourceLang || '')?.langName || 'English',
                 source_code: getLangCodeByLang(sourceLang || '')?.langCode || 'en',
                 target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
                 target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
-                text: sourceText || '',
+                category: category || 'default',
+                tone: tone || 'casual',
             }
-            const response = await dispatch(requestOllamaThunk({ promptParams: requestParams })).unwrap();
-            setResultText(response.data.text || '');
+            const response = await dispatch(requestOllamaThunk(requestParams)).unwrap();
+            if (!response || !response.translated_text) {
+                throw new Error("Failed to process translation.");
+            }
+            setResultText(response.translated_text || '');
             message.success('Translation successful!');
         }
         catch (error: any) {

@@ -13,17 +13,21 @@ import type { PromptParams } from "@/types/translate.type";
 import type { ErrorType } from "@/types/error.type";
 
 export type TranslateState = {
-    data: { text: string };
+    data: { translated_text: string };
     loading: boolean;
     error?: ErrorType['error'] | null;
 }
 
-export const requestOllamaThunk = createAsyncThunk<{ data: { text: string } }, { promptParams: PromptParams }, { rejectValue: ErrorType }>(
+export type TranslateResponse = {
+    translated_text: string
+}
+
+export const requestOllamaThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
     'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await OllamaTranslate(data.promptParams);
-            return response;
+            const response = await OllamaTranslate(data);
+            return response.data;
         } catch (error: any) {
             const errorData: ErrorType = error?.data || { error: "Translate Failed" };
             return rejectWithValue(errorData);
@@ -34,7 +38,7 @@ export const requestOllamaThunk = createAsyncThunk<{ data: { text: string } }, {
 const TranslateSlice = createSlice({
     name: 'translate',
     initialState: {
-        data: { text: '' },
+        data: { translated_text: '' },
         loading: false,
         error: null,
     } as TranslateState,
@@ -45,7 +49,7 @@ const TranslateSlice = createSlice({
         })
         builder.addCase(requestOllamaThunk.fulfilled, (state, action) => {
             state.loading = false;
-            state.data = action.payload.data;
+            state.data = action.payload;
         })
         builder.addCase(requestOllamaThunk.rejected, (state, action) => {
             state.loading = false;

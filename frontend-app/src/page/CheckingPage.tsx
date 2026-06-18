@@ -7,8 +7,7 @@ import { useNavigate } from 'react-router-dom';
  */
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
-import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestOllamaCheckThunk } from '@/redux/features/check';
-import { requestStartBackendThunk } from '@/redux/features/start';
+import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestStartBackendThunk, requestOllamaCheckThunk } from '@/redux/features/check';
 
 /**
  * Ant Design
@@ -118,6 +117,7 @@ const CheckingPage: React.FC = () => {
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
                 try {
                     const response = await dispatch(requestStartBackendThunk(null)).unwrap();
+                    console.log(response);
                     if (response.startBackendStatus?.status === 'success') {
                         setStartBackendStatus(response.startBackendStatus);
                         break; // Exit loop if backend is ready
@@ -125,6 +125,12 @@ const CheckingPage: React.FC = () => {
                         setStartBackendStatus({ status: 'error' });
                     }
                 } catch (e) {
+                    if (i === 14) {
+                        navigate('/error');
+                        setTimeout(() => {
+                            setScenario('error');
+                        }, 3000);
+                    }
                     console.log(`Waiting for backend...`);
                 }
             }
@@ -132,7 +138,6 @@ const CheckingPage: React.FC = () => {
             // Step 4: Ollama API
             try {
                 const response = await dispatch(requestOllamaCheckThunk(null)).unwrap();
-                console.log(response);
                 if (response?.ollamaStatus?.status !== 'success') {
                     setOllamaStatus({ status: 'error' });
                 } else {
