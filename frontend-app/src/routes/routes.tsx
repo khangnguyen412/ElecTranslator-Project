@@ -1,29 +1,45 @@
 /**
  * Routes
  */
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import type { RouteObject } from "react-router-dom";
 
 const LoadingPage = lazy(() => import('@/page/CheckingPage'));
 const TranslationPage = lazy(() => import('@/page/TranslationPanel'));
-const FallbackPage = lazy(() => import('@/page/FallbackPage'));
+const ExceptionPage = lazy(() => import('@/page/ExceptionPage'));
 
 export const routes: RouteObject[] = [
     {
         path: '/',
-        element: <LoadingPage />,
+        element: (
+            <Suspense>
+                <LoadingPage />
+            </Suspense>
+        ),
         index: true,
     },
     {
         path: '/fallback',
-        element: <FallbackPage scenario="fallback" />,
+        element: (
+            <Suspense>
+                <ExceptionPage scenario="fallback" />
+            </Suspense>
+        ),
     },
     {
         path: '/error',
-        element: <FallbackPage scenario="error" />,
+        element: (
+            <Suspense>
+                <ExceptionPage scenario="error" />
+            </Suspense>
+        ),
     },
     {
         path: '/translate',
-        element: <TranslationPage defaultTranslate={false} />,
+        element: (
+            <Suspense>
+                <TranslationPage defaultTranslate={false} />
+            </Suspense>
+        ),
     }
 ]

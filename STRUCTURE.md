@@ -113,7 +113,7 @@ ElecTranslator
 │  │  ├─ redux
 │  │  │  ├─ features
 │  │  │  │  ├─ check.ts
-│  │  │  │  ├─ start.ts
+│  │  │  │  ├─ orc.ts
 │  │  │  │  └─ translate.ts
 │  │  │  ├─ store.ts
 │  │  │  └─ types.ts
@@ -121,11 +121,13 @@ ElecTranslator
 │  │  │  └─ routes.tsx
 │  │  ├─ services
 │  │  │  ├─ CheckServices.ts
+│  │  │  ├─ ORCServices.ts
 │  │  │  └─ TranslateServices.ts
 │  │  └─ types
 │  │     ├─ check.type.ts
 │  │     ├─ common.type.ts
 │  │     ├─ error.type.ts
+│  │     ├─ ocr.type.ts
 │  │     └─ translate.type.ts
 │  ├─ tsconfig.app.json
 │  ├─ tsconfig.json
@@ -133,5 +135,4 @@ ElecTranslator
 │  └─ vite.config.ts
 ├─ README.md
 └─ STRUCTURE.md
-
 ```

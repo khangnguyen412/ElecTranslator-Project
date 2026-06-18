@@ -21,12 +21,12 @@ import "@/assets/scss/loading.scss";
 
 const { Text } = Typography;
 
-const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario }) => {
+const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario }) => {
     const navigate = useNavigate();
 
     const pythonStatusState = useSelector((state: RootState) => state.check.pythonStatus);
     const pythonLibraryStatusState = useSelector((state: RootState) => state.check.pythonLibraryStatus);
-    const startBackendStatusState = useSelector((state: RootState) => state.start.startBackend);
+    const startBackendStatusState = useSelector((state: RootState) => state.check.startBackend);
     const ollamaStatusState = useSelector((state: RootState) => state.check.ollamaStatus);
 
     const getStatusIcon = (status: string, size: number = 20) => {
@@ -110,7 +110,7 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
                                     {ollamaStatusState?.status !== 'error' ? (
                                         <Text type="success">Running</Text>
                                     ) : (
-                                        <Text type="danger">Ollama not running</Text>
+                                        <Text type="danger">{ollamaStatusState?.message}</Text>
                                     )}
                                 </React.Fragment>
                             ) : (
@@ -160,4 +160,4 @@ const FallbackPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario 
 
 }
 
-export default FallbackPage;
+export default ExceptionPage;

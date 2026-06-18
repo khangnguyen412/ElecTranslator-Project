@@ -58,7 +58,7 @@ class OllamaService:
             case _:
                 toneHint = "Accurate nuance; natural story flow."
 
-        criticalHint = f"[`CRITICAL] Output MUST be strictly in ${request.targetLang}.`"
+        criticalHint = f"[`CRITICAL] Output MUST be strictly in ${request.target_lang}.`"
         Rule1 = 'SFX/emotions ONLY → natural English interjections (e.g., "Ah!", "Ouch!"); preserve tone/pacing. Never translate SFX to target language.'
         Rule2 = "If the word is a proper noun, translate it using English, never translate to target language."
 
@@ -66,7 +66,7 @@ class OllamaService:
             ruleHint = f"Rule: {criticalHint} {Rule1} {Rule2}."
         else:
             ruleHint = f"Rule: {criticalHint}."
-        return f"You are a professional translator from {request.sourceLang} to {request.targetLang}. Text type: {typeHint} ${toneHint}${ruleHint}Output ONLY the translated text. Do not include quotes, notes, explanations, or English sentences."
+        return f"You are a professional translator from {request.source_lang} to {request.target_lang}. Text type: {typeHint} ${toneHint}${ruleHint}Output ONLY the translated text. Do not include quotes, notes, explanations, or English sentences."
 
     @staticmethod
     async def translate(request: OllamaTranslateRequest) -> OllamaTranslateResponse | ErrorResponse:
@@ -81,7 +81,7 @@ class OllamaService:
         try:
             response = requests.post(f"{OllamaService._base_url}/api/chat", json=payload, timeout=30)
             full_text = response.json()["message"]["content"]
-            return OllamaTranslateResponse(text=full_text)
+            return OllamaTranslateResponse(source_text=request.text, translated_text=full_text)
         except Exception as e:
             raise AppException(error_code=400, status_code="BAD_REQUEST", message="Ollama server is not active", error=str(e))
 

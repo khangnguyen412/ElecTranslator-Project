@@ -7,12 +7,14 @@ from typing import List, Dict, Any, Optional
 from contextlib import redirect_stdout, redirect_stderr
 from paddleocr import PaddleOCR
 
-# --- OCR Types ---
-from app.schema import OCRRequest, OCRResponse, ErrorResponse
+# --- Types ---
+from app.schema import OCRServiceRequest, OCRResponse, ErrorResponse
 
-# --- OCR Exceptions ---
+# --- Exceptions ---
 from app.exceptions import AppException, ServiceConnectionError
 
+# --- Service ---
+from app.services.ollama_service import OllamaService
 
 
 # --- Configuration & Environment Setup ---
@@ -140,7 +142,7 @@ class PaddleOCRService:
         return cls._ocr_engine
 
     @staticmethod
-    async def get_ocr(request: OCRRequest) -> OCRResponse | ErrorResponse:
+    async def get_ocr(request: OCRServiceRequest) -> OCRResponse | ErrorResponse:
         """
         Main async service function to perform OCR.
         ### Args:
@@ -150,24 +152,19 @@ class PaddleOCRService:
         """
         try:
             # Get or Initialize Engine
-            engine = PaddleOCRService._get_engine(request.lang)
+            engine = PaddleOCRService._get_engine(request.ocr_lang)
 
             # Decode Image
-            img = PaddleOCRService._decode_image(request.image)
+            img = PaddleOCRService._decode_image(request.base64_text)
             if img is None:
                 return {"success": False, "error": "Failed to decode image or image not found"}
 
             # Perform Inference (Suppressing logs during inference)
-            devnull = open(os.devnull, "w")
-            try:
-                with redirect_stdout(devnull), redirect_stderr(devnull):
-                    result = engine.predict(img)
-            finally:
-                devnull.close()
+            result = engine.predict(img)
 
             # Parse Results
             texts = PaddleOCRService._parse_result(result)
             return OCRResponse(text=" ".join(texts))
 
         except Exception as e:
-            raise AppException(message="OCR failed", error=str(e))
+            raise AppException(status_code=500, error_code="EXCEPTION", message="OCR failed", error=str(e))
