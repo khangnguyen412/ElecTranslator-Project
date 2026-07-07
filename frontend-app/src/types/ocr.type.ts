@@ -1,5 +1,8 @@
 export interface OCRRequest {
+    mode: string;
     model?: string | undefined;
+    url?: string;
+    api_key?: string;
     base64_text: string;
     ocr_lang: string;
     source_lang: string;

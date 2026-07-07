@@ -4,7 +4,7 @@ An Electron application with React and TypeScript
 
 ## Tech Stack
 - Frontend: React + TypeScript + (Tesseract.js)
-- Engine translation: Ollama
+- Engine translation: 3rd party API, Python Library
 
 ## Recommended IDE Setup
 

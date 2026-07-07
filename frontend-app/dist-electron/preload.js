@@ -10,11 +10,6 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
      */
     captureScreen: () => electron_1.ipcRenderer.invoke('capture-screen'),
     /**
-     * OCR Image Python
-     * @Deprecated
-     */
-    ocrImagePython: (base64Data, lang) => electron_1.ipcRenderer.invoke('ocr-image-python', base64Data, lang),
-    /**
      * Checking System Status
      */
     checkPythonVersion: () => electron_1.ipcRenderer.invoke('check-python-version'),
@@ -24,5 +19,15 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
      * Trigger Capture
      */
     onTriggerCapture: (callback) => electron_1.ipcRenderer.on('trigger-translate', callback),
-    removeTriggerCapture: (callback) => electron_1.ipcRenderer.removeListener('trigger-translate', callback)
+    removeTriggerCapture: (callback) => electron_1.ipcRenderer.removeListener('trigger-translate', callback),
+    /**
+     * Store
+     */
+    store: {
+        getSetting: () => electron_1.ipcRenderer.invoke('store:get-setting'),
+        saveSetting: (setting) => electron_1.ipcRenderer.invoke('store:save-setting', setting),
+        getHistory: () => electron_1.ipcRenderer.invoke('store:get-history'),
+        addHistory: (record) => electron_1.ipcRenderer.invoke('store:add-history', record),
+        clearHistory: () => electron_1.ipcRenderer.invoke('store:clear-history'),
+    }
 });

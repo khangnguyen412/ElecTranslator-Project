@@ -16,7 +16,7 @@ export const routes: RouteObject[] = [
                 <LoadingPage />
             </Suspense>
         ),
-        index: true,
+        // index: true,
     },
     {
         path: '/fallback',
@@ -35,11 +35,13 @@ export const routes: RouteObject[] = [
         ),
     },
     {
-        path: '/translate',
+        // path: '/translate',
+        path: '/',
         element: (
             <Suspense>
                 <TranslationPage defaultTranslate={false} />
             </Suspense>
         ),
+        index: true,
     }
 ]

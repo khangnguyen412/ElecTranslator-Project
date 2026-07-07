@@ -15,12 +15,69 @@ import { captureRegionInteractive } from './module/screenshot/screenshot'
 import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocrRead";
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
 import { startBackend, setupBackendCleanup } from "./module/checking/serviceStartup";
+import store from "./module/store/store";
 
 /**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
 
+/**
+ * Get setting from store
+ */
+ipcMain.handle('store:get-setting', () => {
+    return store.get('data')['setting']
+})
+
+/**
+ * Set setting to store
+ */
+ipcMain.handle('store:save-setting', (event, setting) => {
+    const currentSetting = store.get('data')['setting']
+    store.set("data.setting", { ...currentSetting, ...setting, })
+    return true
+})
+
+/**
+ * Get history from store
+ */
+ipcMain.handle('store:get-history', () => {
+    return store.get('data')['history'] || []
+})
+
+/**
+ * Set history to store
+ */
+ipcMain.handle('store:add-history', (event, record) => {
+    const history = store.get('data')['history'] || []
+
+    /**
+     * Push new record to the head of history array
+     */
+    history.unshift(record)
+
+    /**
+     * Keep only 50 records
+     */
+    if (history.length > 50) {
+        history.pop()
+    }
+
+    store.set("data.history", history)
+    return true
+})
+
+/**
+ * Clear history from store
+ */
+ipcMain.handle('store:clear-history', () => {
+    store.set("data.history", [])
+    return true
+})
+
+/**
+ * Check Python version
+ */
 ipcMain.handle('check-python-version', async () => {
     try {
         const response = await checkPythonVersion();
@@ -30,6 +87,9 @@ ipcMain.handle('check-python-version', async () => {
     }
 });
 
+/**
+ * Start backend service
+ */
 ipcMain.handle('start-backend', async () => {
     try {
         await startBackend();
@@ -39,6 +99,9 @@ ipcMain.handle('start-backend', async () => {
     }
 });
 
+/**
+ * Check Python library requirements
+ */
 ipcMain.handle('check-python-library-requirements', async (event) => {
     try {
         const response = await checkPythonLibraryRequirements();
@@ -48,7 +111,9 @@ ipcMain.handle('check-python-library-requirements', async (event) => {
     }
 });
 
-
+/**
+ * OCR image using Python
+ */
 ipcMain.handle('ocr-image-python', async (event, base64Data: string, lang: string = "en") => {
     return new Promise((resolve) => {
         const pythonProcess = getOrCreatePythonProcess(lang);

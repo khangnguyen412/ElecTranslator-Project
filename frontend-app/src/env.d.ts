@@ -23,5 +23,16 @@ interface Window {
          */
         onTriggerCapture: (callback: () => void) => void
         removeTriggerCapture: (callback: () => void) => void
+
+        /**
+         * Store
+         */
+        store: {
+            getSetting: () => Promise<StoreType['setting']>
+            saveSetting: (setting: StoreType['setting']) => Promise<boolean>
+            getHistory: () => Promise<StoreType['history']>
+            addHistory: (record: StoreType['history'][0]) => Promise<boolean>
+            clearHistory: () => Promise<boolean>
+        }
     }
 }

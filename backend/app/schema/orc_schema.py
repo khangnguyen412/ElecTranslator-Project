@@ -1,9 +1,12 @@
 from pydantic import BaseModel, Field
 
 class OCRRequest(BaseModel):
+    mode: str = Field(default="Normal", description="Mode of translation.")
+    url: str = Field(default="http://localhost:11434", description="The base URL of the AI server.")
+    api_key: str = Field(default=None, description="The API key of the AI server.")
     base64_text: str = Field(default=None, description="Base64 string or file path of the image.")
     ocr_lang: str = Field(default="en", description="Language code for OCR.")
-    model: str = Field(default="translategemma:12b", description="OCR model to use.")
+    model: str = Field(default=None, description="OCR model to use.")
     source_lang: str = Field(default="english", description="Language code for source text.")
     source_code: str = Field(default="en", description="Language code for source text.")
     target_lang: str = Field(default="vietnamese", description="Language code for target text.")

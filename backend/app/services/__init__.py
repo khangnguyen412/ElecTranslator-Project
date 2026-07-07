@@ -1,11 +1,11 @@
 from .ocr_service import PaddleOCRService
 from .translate_service import TranslationService
-from .ollama_service import OllamaService
+from .ai_service import AiService
 
 __all__ = [
     "PaddleOCRService",
     "TranslationService",
-    "OllamaService",
+    "AiService",
 ]
 
 SERVICE_VERSION = "v.1.0"
