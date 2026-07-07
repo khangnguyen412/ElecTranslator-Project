@@ -2,7 +2,7 @@
 
 .flex-loading {
     min-height: 100vh;
-    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+    background: linear-gradient(135deg, #A3A6D8 0%, #1a1a2e 50%, #16213e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -68,7 +68,7 @@
     width: 100%;
     max-width: 520px;
     padding: 40px 32px;
-    background: rgba(255, 255, 255, 0.03);
+    background: #ffffff08;
     border-radius: 20px;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);

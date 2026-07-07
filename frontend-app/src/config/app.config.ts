@@ -4,7 +4,7 @@ export default class AppConfig {
     static readonly APIEndpoint: string = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
     /**
-     * Get URL API của Ollama
+     * Get URL API backend
      */
     static get ApiUrl() {
         return AppConfig.APIEndpoint + '/api';

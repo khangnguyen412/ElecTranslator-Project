@@ -4,7 +4,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 /**
  * Service
  */
-import { OllamaTranslate } from "@/services/TranslateServices";
+import { AITranslate } from "@/services/TranslateServices";
 
 /**
  * Type
@@ -26,7 +26,7 @@ export const requestOllamaThunk = createAsyncThunk<TranslateResponse, PromptPara
     'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await OllamaTranslate(data);
+            const response = await AITranslate(data);
             return response.data;
         } catch (error: any) {
             const errorData: ErrorType = error?.data || { error: "Translate Failed" };

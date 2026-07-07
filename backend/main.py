@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import ApiResponse, process_ocr, process_translate, process_ollama_translate
+from app.routers import ApiResponse, process_ocr, process_translate, process_ai_translate
 from app.schema import ErrorResponse, HealthResponse
 from app.exceptions import AppException
 
@@ -34,7 +34,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 app.include_router(process_ocr, prefix="/api/ocr", tags=["OCR"])
 app.include_router(process_translate, prefix="/api/translate", tags=["Translate"])
-app.include_router(process_ollama_translate, prefix="/api/ollama", tags=["Ollama"])
+app.include_router(process_ai_translate, prefix="/api/ai", tags=["AI"])
 
 
 @app.get("/api/health")

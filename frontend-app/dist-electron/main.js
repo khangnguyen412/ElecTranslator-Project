@@ -17,10 +17,59 @@ const screenshot_1 = require("./module/screenshot/screenshot");
 const ocrRead_1 = require("./module/orc/ocrRead");
 const serviceCheck_1 = require("./module/checking/serviceCheck");
 const serviceStartup_1 = require("./module/checking/serviceStartup");
+const store_1 = __importDefault(require("./module/store/store"));
 /**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
+/**
+ * Get setting from store
+ */
+electron_1.ipcMain.handle('store:get-setting', () => {
+    return store_1.default.get('data')['setting'];
+});
+/**
+ * Set setting to store
+ */
+electron_1.ipcMain.handle('store:save-setting', (event, setting) => {
+    const currentSetting = store_1.default.get('data')['setting'];
+    store_1.default.set("data.setting", { ...currentSetting, ...setting, });
+    return true;
+});
+/**
+ * Get history from store
+ */
+electron_1.ipcMain.handle('store:get-history', () => {
+    return store_1.default.get('data')['history'] || [];
+});
+/**
+ * Set history to store
+ */
+electron_1.ipcMain.handle('store:add-history', (event, record) => {
+    const history = store_1.default.get('data')['history'] || [];
+    /**
+     * Push new record to the head of history array
+     */
+    history.unshift(record);
+    /**
+     * Keep only 50 records
+     */
+    if (history.length > 50) {
+        history.pop();
+    }
+    store_1.default.set("data.history", history);
+    return true;
+});
+/**
+ * Clear history from store
+ */
+electron_1.ipcMain.handle('store:clear-history', () => {
+    store_1.default.set("data.history", []);
+    return true;
+});
+/**
+ * Check Python version
+ */
 electron_1.ipcMain.handle('check-python-version', async () => {
     try {
         const response = await (0, serviceCheck_1.checkPythonVersion)();
@@ -30,6 +79,9 @@ electron_1.ipcMain.handle('check-python-version', async () => {
         return error;
     }
 });
+/**
+ * Start backend service
+ */
 electron_1.ipcMain.handle('start-backend', async () => {
     try {
         await (0, serviceStartup_1.startBackend)();
@@ -39,6 +91,9 @@ electron_1.ipcMain.handle('start-backend', async () => {
         return { status: 'error', message: error };
     }
 });
+/**
+ * Check Python library requirements
+ */
 electron_1.ipcMain.handle('check-python-library-requirements', async (event) => {
     try {
         const response = await (0, serviceCheck_1.checkPythonLibraryRequirements)();
@@ -48,6 +103,9 @@ electron_1.ipcMain.handle('check-python-library-requirements', async (event) => 
         return { message: error };
     }
 });
+/**
+ * OCR image using Python
+ */
 electron_1.ipcMain.handle('ocr-image-python', async (event, base64Data, lang = "en") => {
     return new Promise((resolve) => {
         const pythonProcess = (0, ocrRead_1.getOrCreatePythonProcess)(lang);

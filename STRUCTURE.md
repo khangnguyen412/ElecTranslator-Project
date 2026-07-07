@@ -1,33 +1,44 @@
 # Project structure 
+
 ```
 ElecTranslator
 ├─ backend
 │  ├─ .env
+│  ├─ .pytest_cache
+│  │  ├─ CACHEDIR.TAG
+│  │  ├─ README.md
+│  │  └─ v
+│  │     └─ cache
+│  │        ├─ lastfailed
+│  │        └─ nodeids
 │  ├─ app
 │  │  ├─ exceptions
 │  │  │  ├─ exceptions.py
 │  │  │  └─ __init__.py
 │  │  ├─ routers
+│  │  │  ├─ ai.py
 │  │  │  ├─ api_response.py
 │  │  │  ├─ ocr.py
-│  │  │  ├─ ollama.py
 │  │  │  ├─ translate.py
 │  │  │  └─ __init__.py
 │  │  ├─ schema
+│  │  │  ├─ ai_schema.py
 │  │  │  ├─ error_schema.py
 │  │  │  ├─ health_schema.py
-│  │  │  ├─ ollama_schema.py
 │  │  │  ├─ orc_schema.py
 │  │  │  ├─ translate_schema.py
 │  │  │  └─ __init__.py
-│  │  ├─ services
-│  │  │  ├─ ocr_service.py
-│  │  │  ├─ ollama_service.py
-│  │  │  ├─ translate_service.py
-│  │  │  └─ __init__.py
-│  │  └─ __init__.py
+│  │  └─ services
+│  │     ├─ ai_service.py
+│  │     ├─ ocr_service.py
+│  │     ├─ translate_service.py
+│  │     └─ __init__.py
 │  ├─ main.py
 │  ├─ requirements.txt
+│  ├─ tests
+│  │  ├─ conftest.py
+│  │  ├─ test_ai_service_translate.py
+│  │  └─ __init__.py
 │  └─ utils
 │     └─ check_dependencies.py
 ├─ frontend-app
@@ -51,9 +62,13 @@ ElecTranslator
 │  │  │  │  └─ serviceStartup.js
 │  │  │  ├─ orc
 │  │  │  │  └─ ocrRead.js
-│  │  │  └─ screenshot
-│  │  │     └─ screenshot.js
+│  │  │  ├─ screenshot
+│  │  │  │  └─ screenshot.js
+│  │  │  └─ store
+│  │  │     └─ store.js
 │  │  ├─ preload.js
+│  │  ├─ type
+│  │  │  └─ store.type.js
 │  │  └─ utils
 │  │     ├─ getResourcePath.js
 │  │     └─ parseRequirement.js
@@ -65,13 +80,16 @@ ElecTranslator
 │  │  │  │  └─ serviceStartup.ts
 │  │  │  ├─ orc
 │  │  │  │  └─ ocrRead.ts
-│  │  │  └─ screenshot
-│  │  │     ├─ screenshot.ts
-│  │  │     └─ selectionOverlay.html
+│  │  │  ├─ screenshot
+│  │  │  │  ├─ screenshot.ts
+│  │  │  │  └─ selectionOverlay.html
+│  │  │  └─ store
+│  │  │     └─ store.ts
 │  │  ├─ preload.ts
 │  │  ├─ README.md
 │  │  ├─ tsconfig.json
 │  │  ├─ type
+│  │  │  └─ store.type.ts
 │  │  └─ utils
 │  │     └─ getResourcePath.ts
 │  ├─ electron-builder.json
@@ -106,7 +124,7 @@ ElecTranslator
 │  │  ├─ main.tsx
 │  │  ├─ page
 │  │  │  ├─ CheckingPage.tsx
-│  │  │  ├─ FallbackPage.tsx
+│  │  │  ├─ ExceptionPage.tsx
 │  │  │  ├─ layout
 │  │  │  │  └─ MainLayout.tsx
 │  │  │  └─ TranslationPanel.tsx
@@ -114,6 +132,7 @@ ElecTranslator
 │  │  │  ├─ features
 │  │  │  │  ├─ check.ts
 │  │  │  │  ├─ orc.ts
+│  │  │  │  ├─ store.ts
 │  │  │  │  └─ translate.ts
 │  │  │  ├─ store.ts
 │  │  │  └─ types.ts
@@ -122,12 +141,14 @@ ElecTranslator
 │  │  ├─ services
 │  │  │  ├─ CheckServices.ts
 │  │  │  ├─ ORCServices.ts
+│  │  │  ├─ StoreServices.ts
 │  │  │  └─ TranslateServices.ts
 │  │  └─ types
 │  │     ├─ check.type.ts
 │  │     ├─ common.type.ts
 │  │     ├─ error.type.ts
 │  │     ├─ ocr.type.ts
+│  │     ├─ store.type.ts
 │  │     └─ translate.type.ts
 │  ├─ tsconfig.app.json
 │  ├─ tsconfig.json
@@ -135,4 +156,5 @@ ElecTranslator
 │  └─ vite.config.ts
 ├─ README.md
 └─ STRUCTURE.md
+
 ```

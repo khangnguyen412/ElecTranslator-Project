@@ -2,24 +2,22 @@ import requests
 import httpx
 
 
-from app.schema import OllamaTranslateRequest, OllamaTranslateResponse, OllamaStatusResponse, OllamaModelResponse, ErrorResponse
+from app.schema import AiTranslateRequest, AiTranslateResponse, AiStatusResponse, AiModelResponse, ErrorResponse
 from app.exceptions import AppException, ServiceConnectionError
 
 
-class OllamaService:
-
+class AiService:
     _model: str = ""
-    _base_url: str = "http://localhost:11434"
 
     def __init__(self):
         pass
 
     @classmethod
-    def _build_prompt(cls, request: OllamaTranslateRequest) -> str:
+    def _build_prompt(cls, request: AiTranslateRequest) -> str:
         """
         Build the prompt for the translation.
         ### Parameters:
-        - request: OllamaTranslateRequest - The request object containing the translation details.
+        - request: AiTranslateRequest - The request object containing the translation details.
         ### Returns:
         - str: The prompt string.
         """
@@ -69,49 +67,47 @@ class OllamaService:
         return f"You are a professional translator from {request.source_lang} to {request.target_lang}. Text type: {typeHint} ${toneHint}${ruleHint}Output ONLY the translated text. Do not include quotes, notes, explanations, or English sentences."
 
     @staticmethod
-    async def translate(request: OllamaTranslateRequest) -> OllamaTranslateResponse | ErrorResponse:
+    async def translate(request: AiTranslateRequest) -> AiTranslateResponse | ErrorResponse:
         """
-        Translate text using Ollama model.
+        Translate text using AI model.
         ### Returns
-            OllamaTranslateResponse with translated text or ErrorResponse if failed
+            AiTranslateResponse with translated text or ErrorResponse if failed
         """
-        prompt = OllamaService._build_prompt(request)
-        payload = {"model": request.model or OllamaService._model, "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": request.text}], "stream": False}
+        headers = {"Content-Type": "application/json"}
+        if request.api_key:
+            headers["Authorization"] = f"Bearer {request.api_key}"
+        prompt = AiService._build_prompt(request)
+        payload = {"model": request.model or AiService._model, "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": request.text}], "stream": False}
 
         try:
-            response = requests.post(f"{OllamaService._base_url}/api/chat", json=payload, timeout=30)
-            full_text = response.json()["message"]["content"]
-            return OllamaTranslateResponse(source_text=request.text, translated_text=full_text)
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.post(f"{request.url}/chat/completions", json=payload, headers=headers, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                full_text = data["choices"][0]["message"]["content"]
+            return AiTranslateResponse(source_text=request.text, translated_text=full_text)
         except Exception as e:
-            raise AppException(error_code=400, status_code="BAD_REQUEST", message="Ollama server is not active", error=str(e))
+            raise AppException(status_code=502, error_code="CONNECTION_REFUSED", message="AI server is not active or connection refused", error=str(e))
 
     @staticmethod
-    async def check_active() -> OllamaStatusResponse | ErrorResponse:
+    async def check_active(base_url: str, api_key: str) -> AiStatusResponse | ErrorResponse:
         """
-        Check if the ollama server is active.
+        Check if the AI server is active.
         ### Returns
-            OllamaStatusResponse with status or ErrorResponse if failed
+            AiStatusResponse with status or ErrorResponse if failed
         """
         try:
-            response = requests.get(f"{OllamaService._base_url}")
+            # Use endpoint /api/tags for Ollama, /models for OpenAI-compatible
+            check_url = f"{base_url.rstrip('/')}/models" if "api.openai" in base_url else f"{base_url.rstrip('/')}/api/tags"
+
+            headers = {"Content-Type": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+
+            response = requests.get(check_url, headers=headers, timeout=30)
             if response.status_code == 200:
-                return OllamaStatusResponse(status="success")
+                return AiStatusResponse(status="success")
             else:
-                raise ServiceConnectionError(message="Ollama server is not active", error=str(response.status_code))
+                raise ServiceConnectionError(message="AI server is not active", error=str(response.status_code))
         except Exception as e:
-            raise ServiceConnectionError(message="Ollama server is not active", error=str(e))
-
-    @staticmethod
-    async def check_model() -> OllamaModelResponse | ErrorResponse:
-        """
-        Check if the model exists.
-        ### Returns
-            OllamaModelResponse with model list or ErrorResponse if failed
-        """
-        try:
-            response = requests.get(f"{OllamaService._base_url}/api/tags")
-            response.raise_for_status()
-            result = response.json()
-            return OllamaModelResponse(model=result["models"])
-        except Exception as e:
-            raise ServiceConnectionError(message="Ollama server is not active")
+            raise ServiceConnectionError(message="AI server is not active", error=str(e))

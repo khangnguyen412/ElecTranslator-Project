@@ -14,8 +14,6 @@ from app.schema import OCRServiceRequest, OCRResponse, ErrorResponse
 from app.exceptions import AppException, ServiceConnectionError
 
 # --- Service ---
-from app.services.ollama_service import OllamaService
-
 
 # --- Configuration & Environment Setup ---
 os.environ["CPU_NUM"] = "2"

@@ -8,7 +8,10 @@ export interface Prompt {
 }
 
 export interface PromptParams {
+    mode: string;
     model?: string | undefined;
+    url?: string | undefined;
+    api_key?: string | undefined;
     text: string; // Text to translate
     source_lang: string; // ISO 639-1 (ja, en, ko, zh, fr, de...)
     source_code: string; // Code of source language (en, zh, fr, de...)
