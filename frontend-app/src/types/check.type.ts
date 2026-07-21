@@ -17,8 +17,3 @@ export type startBackend = {
     status: status;
     message?: string;
 }
-
-export type ollamaStatus = {
-    status: status;
-    message?: string;
-}

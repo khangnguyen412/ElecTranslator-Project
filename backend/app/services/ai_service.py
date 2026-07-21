@@ -12,6 +12,36 @@ class AiService:
     def __init__(self):
         pass
 
+    @staticmethod
+    def _detect_provider(request: AiTranslateRequest) -> str:
+        """
+        Detect the provider based on the request provider name.
+        ### Parameters:
+        - request: AiTranslateRequest - The request object containing the translation details.
+        ### Returns:
+        - str: The detected provider name.
+        """
+        provider = request.provider.lower().strip()
+        if provider in ("google", "gemini", "gemma"):
+            return "google"
+        return provider
+
+    @staticmethod
+    def _parse_google_response(data: dict) -> str:
+        """
+        Parse Google Gemini/Gemma API response (interaction object).
+        Find step type='model_output' → content[0].text
+        """
+        steps = data.get("steps", [])
+        for step in steps:
+            if step.get("type") == "model_output":
+                content = step.get("content", [])
+                if content and isinstance(content, list) and len(content) > 0:
+                    text = content[0].get("text", "")
+                    if text:
+                        return text
+        raise AppException(status_code=502, error_code="INVALID_RESPONSE", message="No model_output content found in Google API response")
+
     @classmethod
     def _build_prompt(cls, request: AiTranslateRequest) -> str:
         """
@@ -21,7 +51,6 @@ class AiService:
         ### Returns:
         - str: The prompt string.
         """
-
         match request.category:
             case "comic":
                 typeHint = "Concise; fit speech bubbles."
@@ -73,18 +102,49 @@ class AiService:
         ### Returns
             AiTranslateResponse with translated text or ErrorResponse if failed
         """
+        # Detect provider
+        provider = AiService._detect_provider(request)
+
         headers = {"Content-Type": "application/json"}
-        if request.api_key:
+        if provider == "google":
+            headers["x-goog-api-key"] = request.api_key
+        else:
             headers["Authorization"] = f"Bearer {request.api_key}"
+
         prompt = AiService._build_prompt(request)
-        payload = {"model": request.model or AiService._model, "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": request.text}], "stream": False}
+        if provider == "google":
+            payload = {
+                "model": request.model or AiService._model,
+                "input": f"{prompt}\n\n Content: '{request.text}'",
+                "stream": False,
+            }
+        else:
+            payload = {
+                "model": request.model or AiService._model,
+                "messages": [
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": request.text},
+                ],
+                "stream": False,
+            }
+
+        # Determine endpoint based on provider
+        if provider == "google":
+            endpoint = f"{request.url.rstrip('/')}"
+        else:
+            endpoint = f"{request.url.rstrip('/')}/chat/completions"
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post(f"{request.url}/chat/completions", json=payload, headers=headers, timeout=30)
+                response = await client.post(endpoint, json=payload, headers=headers, timeout=30)
                 response.raise_for_status()
                 data = response.json()
-                full_text = data["choices"][0]["message"]["content"]
+
+                if provider == "google":
+                    full_text = AiService._parse_google_response(data)
+                else:
+                    full_text = data["choices"][0]["message"]["content"]
+
             return AiTranslateResponse(source_text=request.text, translated_text=full_text)
         except Exception as e:
             raise AppException(status_code=502, error_code="CONNECTION_REFUSED", message="AI server is not active or connection refused", error=str(e))

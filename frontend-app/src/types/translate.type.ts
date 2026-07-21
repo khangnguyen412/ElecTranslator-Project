@@ -9,6 +9,7 @@ export interface Prompt {
 
 export interface PromptParams {
     mode: string;
+    provider?: string | undefined;
     model?: string | undefined;
     url?: string | undefined;
     api_key?: string | undefined;

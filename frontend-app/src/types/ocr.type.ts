@@ -1,5 +1,6 @@
 export interface OCRRequest {
     mode: string;
+    provider?: string | undefined;
     model?: string | undefined;
     url?: string;
     api_key?: string;

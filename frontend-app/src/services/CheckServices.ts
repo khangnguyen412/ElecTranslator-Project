@@ -8,11 +8,3 @@ export const backendCheck = async (): Promise<any> => {
         throw error
     }
 }
-
-export const ollamaCheck = async (): Promise<any> => {
-    try {
-        return await getRequest('/ollama/status', { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
-    } catch (error) {
-        throw error
-    }
-}
