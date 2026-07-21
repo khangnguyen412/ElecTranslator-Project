@@ -22,7 +22,7 @@ export type TranslateResponse = {
     translated_text: string
 }
 
-export const requestOllamaThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+export const requestAIThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
     'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
@@ -44,14 +44,14 @@ const TranslateSlice = createSlice({
     } as TranslateState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(requestOllamaThunk.pending, (state) => {
+        builder.addCase(requestAIThunk.pending, (state) => {
             state.loading = true;
         })
-        builder.addCase(requestOllamaThunk.fulfilled, (state, action) => {
+        builder.addCase(requestAIThunk.fulfilled, (state, action) => {
             state.loading = false;
             state.data = action.payload;
         })
-        builder.addCase(requestOllamaThunk.rejected, (state, action) => {
+        builder.addCase(requestAIThunk.rejected, (state, action) => {
             state.loading = false;
             state.error = action?.payload?.error;
         })

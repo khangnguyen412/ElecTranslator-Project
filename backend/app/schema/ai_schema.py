@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class AiTranslateRequest(BaseModel):
+    provider: str = Field(default="ollama", description="The AI provider to use.")
     model: str = Field(default="translategemma:12b", description="The model to use.")
     url: str = Field(default="http://localhost:11434", description="The base URL of the AI server.")
     api_key: str = Field(default=None, description="The API key of the AI server.")

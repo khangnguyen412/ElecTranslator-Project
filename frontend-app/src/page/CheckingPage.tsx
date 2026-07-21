@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
  */
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
-import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestStartBackendThunk, requestOllamaCheckThunk } from '@/redux/features/check';
+import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestStartBackendThunk } from '@/redux/features/check';
 
 /**
  * Ant Design
@@ -23,7 +23,7 @@ import "@/assets/scss/loading.scss";
 /**
  * Type
  */
-import type { pythonStatus, pythonLibStatus, ollamaStatus, startBackend } from "@/types/check.type";
+import type { pythonStatus, pythonLibStatus, startBackend } from "@/types/check.type";
 
 const { Text } = Typography;
 
@@ -40,15 +40,13 @@ const CheckingPage: React.FC = () => {
     const [pythonStatus, setPythonStatus] = useState<pythonStatus>({ status: 'idle' });
     const [pythonLibraryStatus, setPythonLibraryStatus] = useState<pythonLibStatus>({ status: 'idle' });
     const [startBackendStatus, setStartBackendStatus] = useState<startBackend>({ status: 'idle' });
-    const [ollamaStatus, setOllamaStatus] = useState<ollamaStatus>({ status: 'idle' });
     const [scenario, setScenario] = useState<'idle' | 'success' | 'fallback' | 'error'>('idle');
 
     const isAllReady = useMemo(() =>
-        ollamaStatus?.status === 'success' &&
         pythonStatus?.status === 'success' &&
         pythonLibraryStatus?.status === 'success' &&
         startBackendStatus?.status === 'success',
-        [ollamaStatus, pythonStatus, pythonLibraryStatus, startBackendStatus]);
+        [pythonStatus, pythonLibraryStatus, startBackendStatus]);
 
     /**
      * Sequential checks
@@ -58,7 +56,6 @@ const CheckingPage: React.FC = () => {
         setPythonStatus({ status: 'idle' });
         setPythonLibraryStatus({ status: 'idle' });
         setStartBackendStatus({ status: 'idle' });
-        setOllamaStatus({ status: 'idle' });
         try {
             // Step 1: Python Environment
             try {
@@ -111,7 +108,6 @@ const CheckingPage: React.FC = () => {
                 throw e;
             }
 
-            // Step 3: Start Backend
             await window.electronAPI.startBackend();
             for (let i = 0; i < 15; i++) {
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
@@ -135,22 +131,6 @@ const CheckingPage: React.FC = () => {
                 }
             }
 
-            // Step 4: Ollama API
-            try {
-                const response = await dispatch(requestOllamaCheckThunk(null)).unwrap();
-                if (response?.ollamaStatus?.status !== 'success') {
-                    setOllamaStatus({ status: 'error' });
-                } else {
-                    setOllamaStatus({ status: 'success' });
-                }
-            } catch (e) {
-                setOllamaStatus({ status: 'error' });
-                setTimeout(() => {
-                    setScenario('fallback');
-                }, 3000);
-                throw e;
-            }
-
             // Step 5: All checks passed
             setScenario('success');
             setTimeout(() => {
@@ -171,7 +151,6 @@ const CheckingPage: React.FC = () => {
         if (pythonStatus.status === 'success') step++;
         if (pythonLibraryStatus.status === 'success') step++;
         if (startBackendStatus.status === 'success') step++;
-        if (ollamaStatus.status === 'success') step++;
         return step;
     }
 
@@ -268,28 +247,6 @@ const CheckingPage: React.FC = () => {
                     </Row>
                 ),
                 icon: getStatusIcon(startBackendStatus?.status || 'loading'),
-            },
-            {
-                title: (
-                    <Space>
-                        <ApiOutlined /> Ollama API
-                    </Space>
-                ),
-                description: (
-                    <Row gutter={8}>
-                        <Col>
-                            <Text type="secondary" style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                Status:
-                            </Text>
-                        </Col>
-                        <Col>
-                            {ollamaStatus?.status === 'idle' && <Tag color="blue" style={{ fontSize: 10 }}>Checking...</Tag>}
-                            {ollamaStatus?.status === 'success' && <Tag color="green" style={{ fontSize: 10 }}>Ready</Tag>}
-                            {ollamaStatus?.status === 'error' && <Tag color="red" style={{ fontSize: 10 }}>Unavailable</Tag>}
-                        </Col>
-                    </Row>
-                ),
-                icon: getStatusIcon(ollamaStatus?.status || 'loading'),
             },
         ],
     }

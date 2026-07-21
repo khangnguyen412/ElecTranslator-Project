@@ -13,7 +13,7 @@ import { CopyOutlined, CameraOutlined, SettingOutlined, TranslationOutlined, Plu
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
 import { requestORCThunk } from '@/redux/features/orc';
-import { requestOllamaThunk } from '@/redux/features/translate';
+import { requestAIThunk } from '@/redux/features/translate';
 
 /**
  * Type
@@ -48,7 +48,6 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
      */
     const [mode, setMode] = useState<string | undefined>('Normal');
     const [model, setModel] = useState<string | undefined>(undefined);
-    const [baseUrl, setBaseUrl] = useState<string | undefined>(undefined);
     const [sourceLang, setSourceLang] = useState<string | undefined>(undefined);
     const [targetLang, setTargetLang] = useState<string | undefined>(undefined);
     const [category, setCategory] = useState<string | undefined>('default');
@@ -59,12 +58,11 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
      */
     const [settingsPopupVisible, setSettingsPopupVisible] = useState<boolean>(false);
     const [providers, setProviders] = useState<Setting['provider']>([]);
-    const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
-    const [backendPort, setBackendPort] = useState<number>(8000);
     const [defaultProviderId, setDefaultProviderId] = useState<string>('');
     const [defaultOcrLanguage, setDefaultOcrLanguage] = useState<string>('');
     const [defaultSourceLanguage, setDefaultSourceLanguage] = useState<string | undefined>(undefined);
     const [defaultTargetLanguage, setDefaultTargetLanguage] = useState<string | undefined>(undefined);
+    const [newModelInput, setNewModelInput] = useState<Record<string, string>>({});
 
     /**
      * Hook
@@ -96,7 +94,6 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
             }
 
             let ocrRequestParams: OCRRequest;
-            console.log(mode);
 
             if (mode === 'Normal') {
                 ocrRequestParams = {
@@ -114,6 +111,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                 const apiKey = defaultProvider?.api_key || '';
                 ocrRequestParams = {
                     mode: mode || 'AI',
+                    provider: defaultProvider?.id || 'ollama',
                     model: model || 'translategemma:12b',
                     url: baseUrl || 'http://localhost:11434',
                     api_key: apiKey,
@@ -181,6 +179,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                 const apiKey = defaultProvider?.api_key || '';
                 requestParams = {
                     mode: mode || 'AI',
+                    provider: defaultProvider?.id || 'ollama',
                     model: model || 'translategemma:12b',
                     url: baseUrl || 'http://localhost:11434',
                     api_key: apiKey,
@@ -192,7 +191,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                     category: category || 'default',
                     tone: tone || 'casual',
                 }
-                response = await dispatch(requestOllamaThunk(requestParams)).unwrap();
+                response = await dispatch(requestAIThunk(requestParams)).unwrap();
             }
 
             if (!response || !response.translated_text) {
@@ -497,7 +496,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                     </Col>
                 </Row>
             </Row>
-            <Modal title="⚙️ Advanced Translation Settings" open={settingsPopupVisible} onCancel={() => setSettingsPopupVisible(false)} width={900}
+            <Modal title="Advanced Translation Settings" open={settingsPopupVisible} onCancel={() => setSettingsPopupVisible(false)} width={900}
                 footer={[
                     <Button key="cancel" onClick={() => setSettingsPopupVisible(false)}>Cancel</Button>,
                     <Button key="save" type="primary" onClick={handleSaveSettings} icon={<SettingOutlined />}>Save Settings</Button>,
@@ -505,7 +504,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                 <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
 
                     {/* ===== GROUP A: Default Language Settings ===== */}
-                    <Card title={<span>🌐 Default Language Settings</span>} size="small" style={{ marginBottom: 16 }}>
+                    <Card title={<span>Default Language Settings</span>} size="small" style={{ marginBottom: 16 }}>
                         <Row gutter={[16, 12]}>
                             <Col span={8}>
                                 <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>OCR Language</Typography.Text>
@@ -559,7 +558,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                         </Row>
                     </Card>
 
-                    <Card title={<span>🔌 API Providers</span>} size="small" style={{ marginBottom: 16 }}
+                    <Card title={<span>API Providers</span>} size="small" style={{ marginBottom: 16 }}
                         extra={
                             <Space>
                                 <Typography.Text style={{ fontSize: 13 }}>Default:</Typography.Text>
@@ -622,29 +621,23 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                                             <Typography.Text style={{ fontSize: 12, color: '#888' }}>Models</Typography.Text>
                                             <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                                                 {(provider.model || []).map((m: string, mi: number) => (
-                                                    <Tag
-                                                        key={mi}
-                                                        color="purple"
-                                                        style={{ fontSize: 11 }}
-                                                        closable
+                                                    <Tag key={m} color="purple" style={{ fontSize: 11 }} closable
                                                         onClose={() => {
                                                             const newList = [...providers];
-                                                            newList[index] = {
-                                                                ...provider,
-                                                                model: (provider.model || []).filter((_, i) => i !== mi)
-                                                            };
+                                                            newList[index] = { ...provider, model: (provider.model || []).filter((_, i) => i !== mi) };
                                                             setProviders(newList);
-                                                        }}
-                                                    >{m}</Tag>
+                                                        }}>{m}</Tag>
                                                 ))}
                                                 <Input
                                                     size="small"
                                                     style={{ width: 160 }}
                                                     placeholder="Model name..."
-                                                    id={`model-input-${index}`}
+                                                    value={newModelInput[provider.id] || ''}
+                                                    onChange={(e) =>
+                                                        setNewModelInput(prev => ({ ...prev, [provider.id]: e.target.value }))
+                                                    }
                                                     onPressEnter={() => {
-                                                        const input = document.getElementById(`model-input-${index}`) as HTMLInputElement;
-                                                        const val = input?.value?.trim();
+                                                        const val = (newModelInput[provider.id] || '').trim();
                                                         if (val) {
                                                             const newList = [...providers];
                                                             newList[index] = {
@@ -653,7 +646,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                                                             };
                                                             setProviders(newList);
                                                         }
-                                                        if (input) input.value = '';
+                                                        setNewModelInput(prev => ({ ...prev, [provider.id]: '' }));
                                                     }}
                                                 />
                                                 <Button
@@ -661,8 +654,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                                                     type="primary"
                                                     icon={<PlusOutlined />}
                                                     onClick={() => {
-                                                        const input = document.getElementById(`model-input-${index}`) as HTMLInputElement;
-                                                        const val = input?.value?.trim();
+                                                        const val = (newModelInput[provider.id] || '').trim();
                                                         if (val) {
                                                             const newList = [...providers];
                                                             newList[index] = {
@@ -671,7 +663,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                                                             };
                                                             setProviders(newList);
                                                         }
-                                                        if (input) input.value = '';
+                                                        setNewModelInput(prev => ({ ...prev, [provider.id]: '' }));
                                                     }}
                                                 >Add</Button>
                                             </div>

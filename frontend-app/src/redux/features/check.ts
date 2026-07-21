@@ -4,12 +4,12 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 /**
  * Service
  */
-import { ollamaCheck, backendCheck } from "@/services/CheckServices";
+import { backendCheck } from "@/services/CheckServices";
 
 /**
  * Type
  */
-import type { pythonStatus, pythonLibStatus, startBackend, ollamaStatus } from "@/types/check.type";
+import type { pythonStatus, pythonLibStatus, startBackend } from "@/types/check.type";
 import type { ErrorType } from "@/types/error.type";
 
 export interface CheckState {
@@ -17,7 +17,6 @@ export interface CheckState {
     pythonStatus: pythonStatus;
     pythonLibraryStatus: pythonLibStatus;
     startBackend: startBackend;
-    ollamaStatus: ollamaStatus;
     error: ErrorType | undefined;
     message?: string;
 }
@@ -73,23 +72,6 @@ export const requestStartBackendThunk = createAsyncThunk<{ startBackendStatus: s
     }
 )
 
-export const requestOllamaCheckThunk = createAsyncThunk<{ ollamaStatus: ollamaStatus }, null, { rejectValue: ErrorType }>(
-    'healthCheck/requestOllamaCheck',
-    async (_, { rejectWithValue }) => {
-        try {
-            const OllamaStatus = await ollamaCheck();
-            return { ollamaStatus: OllamaStatus.data };
-        } catch (error: any) {
-            const errorData: ErrorType = {
-                error_code: error?.error_code || "EXCEPTION",
-                message: error?.message || "Health Check Failed",
-                error: error?.error || "Health Check Failed",
-            };
-            return rejectWithValue(errorData);
-        }
-    }
-)
-
 const CheckSlice = createSlice({
     name: 'check',
     initialState: {
@@ -97,7 +79,6 @@ const CheckSlice = createSlice({
         pythonStatus: { status: 'idle', version: '', message: '' },
         pythonLibraryStatus: { status: 'idle', installed: [], missing: [], },
         startBackend: { status: 'idle', message: '' },
-        ollamaStatus: { status: 'idle', message: '', models: [] },
         error: undefined,
         message: undefined,
     } as CheckState,
@@ -146,22 +127,6 @@ const CheckSlice = createSlice({
         builder.addCase(requestStartBackendThunk.rejected, (state, action) => {
             state.loading = false;
             state.startBackend = { status: 'error', message: 'Start Backend Failed' };
-            state.error = action.payload || undefined;
-        })
-
-        /**
-         * Check Ollama Status
-         */
-        builder.addCase(requestOllamaCheckThunk.pending, (state) => {
-            state.loading = true;
-        })
-        builder.addCase(requestOllamaCheckThunk.fulfilled, (state, action) => {
-            state.loading = false;
-            state.ollamaStatus = action.payload.ollamaStatus;
-        })
-        builder.addCase(requestOllamaCheckThunk.rejected, (state, action) => {
-            state.loading = false;
-            state.ollamaStatus = { status: 'error', message: 'Ollama Check Failed' };
             state.error = action.payload || undefined;
         })
     }

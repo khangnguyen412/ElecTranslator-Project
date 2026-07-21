@@ -27,7 +27,6 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
     const pythonStatusState = useSelector((state: RootState) => state.check.pythonStatus);
     const pythonLibraryStatusState = useSelector((state: RootState) => state.check.pythonLibraryStatus);
     const startBackendStatusState = useSelector((state: RootState) => state.check.startBackend);
-    const ollamaStatusState = useSelector((state: RootState) => state.check.ollamaStatus);
 
     const getStatusIcon = (status: string, size: number = 20) => {
         const style = { fontSize: size };
@@ -100,21 +99,6 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
                                 </React.Fragment>
                             ) : (
                                 <Text>Waiting for Backend</Text>
-                            )}
-                        </Space>
-                        <Space>
-                            {getStatusIcon(ollamaStatusState?.status || 'missing')}
-                            <Text strong>Ollama: </Text>
-                            {ollamaStatusState?.status !== 'idle' ? (
-                                <React.Fragment>
-                                    {ollamaStatusState?.status !== 'error' ? (
-                                        <Text type="success">Running</Text>
-                                    ) : (
-                                        <Text type="danger">{ollamaStatusState?.message}</Text>
-                                    )}
-                                </React.Fragment>
-                            ) : (
-                                <Text>Waiting for Ollama</Text>
                             )}
                         </Space>
                     </Space>
