@@ -1,5 +1,5 @@
 import { app } from 'electron';
-import { spawn, ChildProcess, exec } from 'child_process';
+import { spawn, ChildProcess, exec, execSync } from 'child_process';
 import path from 'path';
 
 
@@ -210,7 +210,7 @@ export const setupBackendCleanup = () => {
     /**
      * Handle cleanup when app closes
      */
-    app.on('before-quit', async () => {
+    app.once('before-quit', async () => {
         console.log('App is closing, stopping backend...');
         await stopBackend();
     });
@@ -228,5 +228,21 @@ export const setupBackendCleanup = () => {
         console.log('Received SIGTERM, stopping backend...');
         await stopBackend();
         process.exit(0);
+    });
+
+    /**
+     * Force-cleanup port 8000 when app closes or process exits
+     */
+    process.on('exit', async () => {
+        console.log('[Cleanup] Force-cleaning port 8000...');
+        try {
+            if (process.platform === 'win32') {
+                execSync('for /f "tokens=5" %a in (\'netstat -ano ^| findstr :8000\') do taskkill /F /PID %a', { stdio: 'ignore' });
+            } else {
+                execSync('lsof -ti :8000 | xargs kill -9 2>/dev/null', { stdio: 'ignore' });
+            }
+        } catch {
+            console.log('[Cleanup] No process found — fine');
+        }
     });
 };

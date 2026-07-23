@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field
 
 class TranslateRequest(BaseModel):
     text: str = Field(description="The text to translate.")
-    sourceLang: str = Field(default="english", description="The source language code.")
-    sourceCode: str = Field(default="en", description="The source language code.")
-    targetLang: str = Field(default="vietnamese", description="The target language code.")
-    targetCode: str = Field(default="vi", description="The target language code.")
+    source_lang: str = Field(default="english", description="The source language code.")
+    source_code: str = Field(default="en", description="The source language code.")
+    target_lang: str = Field(default="vietnamese", description="The target language code.")
+    target_code: str = Field(default="vi", description="The target language code.")
 
 class TranslateResponse(BaseModel):
-    success: bool = Field(description="Whether the translation was successful.")
-    text: str = Field(default=None, description="The translated text.")
+    source_text: str = Field(default=None, description="Source text.")
+    translated_text: str = Field(default=None, description="Translated text.")

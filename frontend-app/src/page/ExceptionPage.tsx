@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -11,36 +11,34 @@ import type { RootState } from '@/redux/store';
 /**
  * Ant Design
  */
-import { Result, Button, Alert, Tag, Typography, Space, Divider } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined, RocketOutlined, ReloadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Result, Button, Alert, Typography, Space, Divider, Tag } from 'antd';
+import { CloseCircleOutlined, WarningOutlined, RocketOutlined, ReloadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+
+/**
+ * Utils
+ */
+import { loadCheckState, clearCheckState } from '@/utils/check-session';
 
 /**
  * Styles
  */
 import "@/assets/scss/loading.scss";
 
+/**
+ * Utils
+ */
+import { getStatusIcon } from '@/utils/checking-icon';
+
 const { Text } = Typography;
 
 const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario }) => {
     const navigate = useNavigate();
 
-    const pythonStatusState = useSelector((state: RootState) => state.check.pythonStatus);
-    const pythonLibraryStatusState = useSelector((state: RootState) => state.check.pythonLibraryStatus);
-    const startBackendStatusState = useSelector((state: RootState) => state.check.startBackend);
+    const savedState = useMemo(() => loadCheckState(), []);
 
-    const getStatusIcon = (status: string, size: number = 20) => {
-        const style = { fontSize: size };
-        switch (status) {
-            case 'success':
-                return <CheckCircleOutlined style={{ ...style, color: '#52c41a' }} />;
-            case 'error':
-                return <CloseCircleOutlined style={{ ...style, color: '#ff4d4f' }} />;
-            case 'timeout':
-                return <CloseCircleOutlined style={{ ...style, color: '#faad14' }} />;
-            default:
-                return <LoadingOutlined spin style={{ ...style, color: '#1890ff' }} />;
-        }
-    };
+    const pythonStatusState = savedState?.pythonStatus ?? useSelector((state: RootState) => state.check.pythonStatus) ?? { status: 'idle' };
+    const pythonLibraryStatusState = savedState?.pythonLibraryStatus ?? useSelector((state: RootState) => state.check.pythonLibraryStatus) ?? { status: 'idle' };
+    const startBackendStatusState = savedState?.backendStatus ?? useSelector((state: RootState) => state.check.startBackend) ?? { status: 'idle' };
 
     const resultConfig = {
         icon: scenario === 'fallback' ? <WarningOutlined style={{ color: '#faad14', fontSize: 72 }} /> : <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 72 }} />,
@@ -105,15 +103,12 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
                 } />
                 <Divider style={{ margin: '16px 0', borderColor: '#fff' }} />
                 <div style={{ background: 'rgba(24,144,255,0.1)', padding: 12, borderRadius: 8 }}>
-                    <Text strong style={{ color: '#1890ff' }}>📋 What works in this mode:</Text>
+                    <Text strong style={{ color: '#1890ff' }}>📋 What should you do:</Text>
                     <ul style={{ margin: '8px 0 0 20px', color: '#ffffffd9' }}>
-                        <li>Screen capture & OCR text extraction</li>
-                        <li>Text display in translation panel</li>
-                        <li>Copy to clipboard functionality</li>
+                        <li>Check your Python environment</li>
+                        <li>Check your Python library</li>
+                        <li>Check your backend API</li>
                     </ul>
-                    <Text type="secondary" style={{ display: 'block', marginTop: 8, color: '#ffffffd9' }}>
-                        AI translation via Gemma3 will be disabled
-                    </Text>
                 </div>
             </div>
         ),
@@ -135,6 +130,14 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
             </React.Fragment>
         )
     }
+
+    useEffect(() => {
+        const hasData = pythonStatusState?.status !== 'idle' || pythonLibraryStatusState?.status !== 'idle' || startBackendStatusState?.status !== 'idle';
+        clearCheckState();
+        if (!hasData) {
+            navigate('/', { replace: true });
+        }
+    }, []);
 
     return (
         <div className="flex-loading flex-col flex-col-fixed">

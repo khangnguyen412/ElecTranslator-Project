@@ -172,6 +172,7 @@ electron_1.app.whenReady().then(async () => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
     }
     createWindow();
+    (0, serviceStartup_1.setupBackendCleanup)();
 });
 electron_1.app.on("window-all-closed", () => {
     if (process.platform !== "darwin")
@@ -190,5 +191,5 @@ electron_1.app.on('will-quit', () => {
             ocrRead_1.pythonProcesses[lang].kill();
         }
     }
-    (0, serviceStartup_1.setupBackendCleanup)();
+    (0, serviceStartup_1.stopBackend)();
 });

@@ -14,11 +14,11 @@ export const AITranslate = async (payload: PromptParams): Promise<any> => {
     }
 }
 
-export const NormalTranslate = async (payload: { sourceLanguage: string, targetLanguage: string, text: string }): Promise<any> => {
+export const NormalTranslate = async (payload: PromptParams): Promise<any> => {
     try {
-        const url = `https://lingva.ml/api/v1` ;
-        const endpoint = `${payload.sourceLanguage}/${payload.targetLanguage}/${encodeURIComponent(payload.text)}`;
-        return await getRequest(endpoint);
+        // const url = `https://lingva.ml/api/v1` ;
+        // const endpoint = `${payload.sourceLanguage}/${payload.targetLanguage}/${encodeURIComponent(payload.text)}`;
+        return await postRequest('/translate', payload, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
     } catch (err) {
         throw err
     }

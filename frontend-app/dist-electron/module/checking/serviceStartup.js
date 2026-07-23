@@ -203,7 +203,7 @@ const setupBackendCleanup = () => {
     /**
      * Handle cleanup when app closes
      */
-    electron_1.app.on('before-quit', async () => {
+    electron_1.app.once('before-quit', async () => {
         console.log('App is closing, stopping backend...');
         await (0, exports.stopBackend)();
     });
@@ -219,6 +219,23 @@ const setupBackendCleanup = () => {
         console.log('Received SIGTERM, stopping backend...');
         await (0, exports.stopBackend)();
         process.exit(0);
+    });
+    /**
+     * Force-cleanup port 8000 when app closes or process exits
+     */
+    process.on('exit', async () => {
+        console.log('[Cleanup] Force-cleaning port 8000...');
+        try {
+            if (process.platform === 'win32') {
+                (0, child_process_1.execSync)('for /f "tokens=5" %a in (\'netstat -ano ^| findstr :8000\') do taskkill /F /PID %a', { stdio: 'ignore' });
+            }
+            else {
+                (0, child_process_1.execSync)('lsof -ti :8000 | xargs kill -9 2>/dev/null', { stdio: 'ignore' });
+            }
+        }
+        catch {
+            console.log('[Cleanup Error] No process found — fine');
+        }
     });
 };
 exports.setupBackendCleanup = setupBackendCleanup;

@@ -4,7 +4,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 /**
  * Service
  */
-import { AITranslate } from "@/services/TranslateServices";
+import { AITranslate, NormalTranslate } from "@/services/TranslateServices";
 
 /**
  * Type
@@ -21,6 +21,20 @@ export type TranslateState = {
 export type TranslateResponse = {
     translated_text: string
 }
+
+export const NormalTranslateResponse = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+    'translate/requestNormal',
+    async (data, { rejectWithValue }) => {
+        try {
+            const response = await NormalTranslate(data);
+            return response.data;
+        } catch (error: any) {
+            const errorData: ErrorType = error?.data || { error: "Translate Failed" };
+            return rejectWithValue(errorData);
+        }
+    }
+)
+
 
 export const requestAIThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
     'translate/requestAI',
@@ -44,6 +58,18 @@ const TranslateSlice = createSlice({
     } as TranslateState,
     reducers: {},
     extraReducers: (builder) => {
+        builder.addCase(NormalTranslateResponse.pending, (state) => {
+            state.loading = true;
+        })
+        builder.addCase(NormalTranslateResponse.fulfilled, (state, action) => {
+            state.loading = false;
+            state.data = action.payload;
+        })
+        builder.addCase(NormalTranslateResponse.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action?.payload?.error;
+        })
+
         builder.addCase(requestAIThunk.pending, (state) => {
             state.loading = true;
         })

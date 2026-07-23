@@ -12,8 +12,8 @@ import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestStartBa
 /**
  * Ant Design
  */
-import { Progress, Tag, Steps, Typography, Space, Row, Col } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined, PythonOutlined, ApiOutlined, } from '@ant-design/icons';
+import { Progress, Steps, Typography } from 'antd';
+
 
 /**
  * Styles
@@ -24,6 +24,16 @@ import "@/assets/scss/loading.scss";
  * Type
  */
 import type { pythonStatus, pythonLibStatus, startBackend } from "@/types/check.type";
+
+/**
+ * Components
+ */
+import { getStepPythonEnvironment } from '@/components/checking/StepPythonEnvironment';
+import { getStepPythonLibrary } from '@/components/checking/StepPythonLibrary';
+import { getStepBackendApi } from '@/components/checking/StepBackendApi';
+
+import { SESSION_KEY } from '@/utils/check-session';
+
 
 const { Text } = Typography;
 
@@ -56,91 +66,129 @@ const CheckingPage: React.FC = () => {
         setPythonStatus({ status: 'idle' });
         setPythonLibraryStatus({ status: 'idle' });
         setStartBackendStatus({ status: 'idle' });
-        try {
-            // Step 1: Python Environment
-            try {
-                const response = await dispatch(requestPythonCheckThunk(null)).unwrap();
-                if (response.pythonStatus?.status !== 'success') {
-                    setPythonStatus({
-                        status: 'error',
-                        message: response.pythonStatus?.message || ''
-                    });
-                    navigate('/error');
-                    return;
-                }
-                setPythonStatus({
-                    status: 'success',
-                    version: response.pythonStatus?.version || '',
-                    message: response.pythonStatus?.message || ''
-                });
-            } catch (e) {
-                setPythonStatus({ status: 'error' });
-                setTimeout(() => {
-                    navigate('/error');
-                }, 3000);
-                throw e;
-            }
 
-            // Step 2: Python Library
-            try {
-                const response = await dispatch(requestPythonLibraryCheckThunk(null)).unwrap();
-                if (response.pythonLibraryStatus?.status !== 'success') {
-                    setPythonLibraryStatus({
-                        status: 'error',
-                        installed: response.pythonLibraryStatus?.installed || [],
-                        missing: response.pythonLibraryStatus?.missing || [],
-                        message: response.pythonLibraryStatus?.message || ''
-                    });
-                    navigate('/error');
-                    return;
-                }
-                setPythonLibraryStatus({
-                    status: 'success',
+        let lastPythonStatus: pythonStatus = { status: 'idle' };
+        let lastPythonLibraryStatus: pythonLibStatus = { status: 'idle' };
+        let lastBackendStatus: startBackend = { status: 'idle' };
+
+        // Step 1: Python Environment
+        try {
+            const response = await dispatch(requestPythonCheckThunk(null)).unwrap();
+            if (response.pythonStatus?.status !== 'success') {
+                const errorInfo = {
+                    status: 'error' as const,
+                    message: response.pythonStatus?.message || 'Python check failed'
+                };
+                setPythonStatus(errorInfo);
+                throw errorInfo;
+            }
+            setPythonStatus({
+                status: 'success',
+                version: response.pythonStatus?.version || '',
+                message: response.pythonStatus?.message || ''
+            });
+            lastPythonStatus = {
+                status: 'success',
+                version: response.pythonStatus?.version || '',
+                message: response.pythonStatus?.message || ''
+            };
+        } catch (e) {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                scenario: 'error',
+                pythonStatus: e,
+                pythonLibraryStatus: lastPythonLibraryStatus,
+                backendStatus: lastBackendStatus,
+            }));
+            setTimeout(() => {
+                navigate('/error', { replace: true });
+            }, 3000);
+            return;
+        }
+
+        // Step 2: Python Library
+        try {
+            const response = await dispatch(requestPythonLibraryCheckThunk(null)).unwrap();
+            if (response.pythonLibraryStatus?.status !== 'success') {
+                const errorInfo = {
+                    status: 'error' as const,
                     installed: response.pythonLibraryStatus?.installed || [],
                     missing: response.pythonLibraryStatus?.missing || [],
-                    message: response.pythonLibraryStatus?.message || ''
-                });
-            } catch (e) {
-                setPythonLibraryStatus({ status: 'error', });
-                setTimeout(() => {
-                    setScenario('error');
-                }, 3000);
-                throw e;
+                    message: response.pythonLibraryStatus?.message || 'Python library check failed'
+                };
+                setPythonLibraryStatus(errorInfo);
+                throw errorInfo;
             }
+            setPythonLibraryStatus({
+                status: 'success',
+                installed: response.pythonLibraryStatus?.installed || [],
+                missing: response.pythonLibraryStatus?.missing || [],
+                message: response.pythonLibraryStatus?.message || ''
+            });
+            lastPythonLibraryStatus = {
+                status: 'success',
+                installed: response.pythonLibraryStatus?.installed || [],
+                missing: response.pythonLibraryStatus?.missing || [],
+                message: response.pythonLibraryStatus?.message || ''
+            };
+        } catch (e) {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                scenario: 'error',
+                pythonStatus: lastPythonStatus,
+                pythonLibraryStatus: e,
+                backendStatus: lastBackendStatus,
+            }));
+            setTimeout(() => {
+                navigate('/error', { replace: true });
+            }, 3000);
+            return;
+        }
 
-            await window.electronAPI.startBackend();
-            for (let i = 0; i < 15; i++) {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
-                try {
-                    const response = await dispatch(requestStartBackendThunk(null)).unwrap();
-                    console.log(response);
-                    if (response.startBackendStatus?.status === 'success') {
-                        setStartBackendStatus(response.startBackendStatus);
-                        break; // Exit loop if backend is ready
-                    } else {
-                        setStartBackendStatus({ status: 'error' });
-                    }
-                } catch (e) {
-                    if (i === 14) {
-                        navigate('/error');
-                        setTimeout(() => {
-                            setScenario('error');
-                        }, 3000);
-                    }
+        await window.electronAPI.startBackend();
+        let backendSuccess = false;
+        for (let i = 0; i < 15; i++) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+            try {
+                const response = await dispatch(requestStartBackendThunk(null)).unwrap();
+                if (response.startBackendStatus?.status === 'success') {
+                    setStartBackendStatus(response.startBackendStatus);
+                    lastBackendStatus = response.startBackendStatus;
+                    backendSuccess = true;
+                    break; // Exit loop if backend is ready
+                } else {
+                    setStartBackendStatus({
+                        status: 'error',
+                        message: response.startBackendStatus?.message || 'Backend not ready'
+                    });
+                }
+            } catch (e) {
+                if (i < 14) {
                     console.log(`Waiting for backend...`);
                 }
             }
-
-            // Step 5: All checks passed
-            setScenario('success');
-            setTimeout(() => {
-                navigate('/translate');
-            }, 3000);
-        } catch (error) {
-            setTimeout(() => {
-                navigate('/fallback');
-            }, 3000);
         }
+        if (!backendSuccess) {
+            const errorInfo = {
+                status: 'error' as const,
+                message: 'Backend not ready after 15 seconds'
+            };
+            setStartBackendStatus(errorInfo);
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                scenario: 'error',
+                pythonStatus: lastPythonStatus,
+                pythonLibraryStatus: lastPythonLibraryStatus,
+                backendStatus: errorInfo,
+            }));
+            setTimeout(() => {
+                navigate('/error', { replace: true });
+            }, 3000);
+            return;
+        }
+
+        // Step 4: All checks passed
+        setScenario('success');
+        setTimeout(() => {
+            navigate('/translate');
+        }, 3000);
     };
 
     /**
@@ -155,23 +203,6 @@ const CheckingPage: React.FC = () => {
     }
 
     /**
-     * Get status icon based on status
-     */
-    const getStatusIcon = (status: string, size: number = 20) => {
-        const style = { fontSize: size };
-        switch (status) {
-            case 'success':
-                return <CheckCircleOutlined style={{ ...style, color: '#52c41a' }} />;
-            case 'error':
-                return <CloseCircleOutlined style={{ ...style, color: '#ff4d4f' }} />;
-            case 'timeout':
-                return <CloseCircleOutlined style={{ ...style, color: '#faad14' }} />;
-            default:
-                return <LoadingOutlined spin style={{ ...style, color: '#1890ff' }} />;
-        }
-    };
-
-    /**
      * Step configuration
      */
     const stepConfig = {
@@ -179,75 +210,9 @@ const CheckingPage: React.FC = () => {
         current: getCompletionStep(),
         style: { backgroundColor: 'transparent' },
         items: [
-            {
-                title: (
-                    <Space>
-                        <PythonOutlined /> Python Environment <Tag color="blue">version 3.11</Tag>
-                    </Space>
-                ),
-                description: (
-                    <Space orientation="vertical" size={0}>
-                        <Text type="secondary" style={{ fontSize: 12, color: '#ffffffa6' }}>
-                            {pythonStatus?.message}
-                        </Text>
-                    </Space>
-                ),
-                icon: getStatusIcon(pythonStatus?.status || 'idle'),
-            },
-            {
-                title: (
-                    <Space>
-                        <PythonOutlined /> Python Library
-                    </Space>
-                ),
-                description: (
-                    <Space orientation="vertical" size={0}>
-                        {pythonLibraryStatus?.status === 'idle' && (
-                            <Space wrap style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                <Tag color="blue" style={{ fontSize: 10 }}>Checking...</Tag>
-                            </Space>
-                        )}
-                        {pythonLibraryStatus?.status === 'success' && (
-                            <Space wrap style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                Installated: {pythonLibraryStatus?.installed?.map((item) => (<Tag key={item} color="green" style={{ fontSize: 10 }}>{item}</Tag>)) || 'None'}
-                            </Space>
-                        )}
-                        {pythonLibraryStatus?.status === 'missing' && (
-                            <React.Fragment>
-                                <Space wrap style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                    Installated: {pythonLibraryStatus?.installed?.map((item) => (<Tag key={item} color="green" style={{ fontSize: 10 }}>{item}</Tag>)) || 'None'}
-                                </Space>
-                                <Space wrap style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                    Missing: {pythonLibraryStatus?.missing?.map((item) => (<Tag key={item} color="red" style={{ fontSize: 10 }}>{item}</Tag>)) || 'None'}
-                                </Space>
-                            </React.Fragment>
-                        )}
-                    </Space>
-                ),
-                icon: getStatusIcon(pythonLibraryStatus?.status || 'loading'),
-            },
-            {
-                title: (
-                    <Space>
-                        <ApiOutlined /> Backend API
-                    </Space>
-                ),
-                description: (
-                    <Row gutter={8}>
-                        <Col>
-                            <Text type="secondary" style={{ fontSize: 12, color: '#ffffffa6' }}>
-                                Status:
-                            </Text>
-                        </Col>
-                        <Col>
-                            {startBackendStatus?.status === 'idle' && <Tag color="blue" style={{ fontSize: 10 }}>Waiting For Backend...</Tag>}
-                            {startBackendStatus?.status === 'success' && <Tag color="green" style={{ fontSize: 10 }}>Ready</Tag>}
-                            {startBackendStatus?.status === 'error' && <Tag color="red" style={{ fontSize: 10 }}>Unavailable</Tag>}
-                        </Col>
-                    </Row>
-                ),
-                icon: getStatusIcon(startBackendStatus?.status || 'loading'),
-            },
+            getStepPythonEnvironment(pythonStatus),
+            getStepPythonLibrary(pythonLibraryStatus),
+            getStepBackendApi(startBackendStatus),
         ],
     }
 

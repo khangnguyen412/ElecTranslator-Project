@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 
 # --- OCR Types ---
-from app.schema import OCRRequest, OCRServiceRequest, AiTranslateRequest, OCRResponse
+from app.schema import OCRRequest, OCRServiceRequest, TranslateRequest, AiTranslateRequest 
 
 # --- OCR Service ---
-from app.services import PaddleOCRService, AiService
+from app.services import PaddleOCRService, TranslationService, AiService 
 
 # --- OCR Router ---
 from app.routers import ApiResponse
@@ -21,7 +21,14 @@ async def process_ocr(request: OCRRequest) -> ApiResponse:
     ocr_result = await PaddleOCRService.get_ocr(orc_request)
 
     if request.mode == "Normal":
-        translate_result = OCRResponse(text=ocr_result.text if hasattr(ocr_result, 'text') else "")
+        translate_request = TranslateRequest(
+            text=ocr_result.text,
+            source_lang=request.source_lang,
+            source_code=request.source_code,
+            target_lang=request.target_lang,
+            target_code=request.target_code,
+        )
+        translate_result = await TranslationService.translate(translate_request)
     else:
         translate_request = AiTranslateRequest(
             provider=request.provider,

@@ -9,7 +9,7 @@
     "build": "pnpm build:electron && pnpm build:frontend",
     "dist": "pnpm build && electron-builder",
     "clean": "rimraf release dist",
-    "dev": "concurrently \"vite\" \"npm run electron:dev\"",
+    "dev": "concurrently --kill-others \"vite\" \"npm run electron:dev\"",
     "electron:dev": "wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && cross-env NODE_ENV=development electron . ",
     "preview": "vite preview"
   },
