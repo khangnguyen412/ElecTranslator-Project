@@ -14,7 +14,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
 import { captureRegionInteractive } from './module/screenshot/screenshot'
 import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocrRead";
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
-import { startBackend, setupBackendCleanup } from "./module/checking/serviceStartup";
+import { startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
 /**
@@ -186,6 +186,7 @@ app.whenReady().then(async () => {
         await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
     }
     createWindow()
+    setupBackendCleanup();
 })
 
 app.on("window-all-closed", () => {
@@ -206,5 +207,5 @@ app.on('will-quit', () => {
         }
     }
 
-    setupBackendCleanup();
+    stopBackend();
 });

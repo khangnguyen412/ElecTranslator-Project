@@ -13,7 +13,7 @@ import { CopyOutlined, CameraOutlined, SettingOutlined, TranslationOutlined, Plu
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
 import { requestORCThunk } from '@/redux/features/orc';
-import { requestAIThunk } from '@/redux/features/translate';
+import { requestAIThunk, NormalTranslateResponse } from '@/redux/features/translate';
 
 /**
  * Type
@@ -173,6 +173,7 @@ const TranslationPanelPage: React.FC<TranslationPanelProps> = ({ defaultTranslat
                     target_lang: getLangNameByLang(targetLang || '')?.langName || 'Vietnamese',
                     target_code: getLangCodeByLang(targetLang || '')?.langCode || 'vi',
                 }
+                response = await dispatch(NormalTranslateResponse(requestParams)).unwrap();
             } else {
                 const defaultProvider = providers.find(p => p.id === defaultProviderId);
                 const baseUrl = defaultProvider?.base_url || 'http://localhost:11434';

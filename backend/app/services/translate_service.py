@@ -6,13 +6,30 @@ from app.schema import TranslateRequest, TranslateResponse, ErrorResponse
 # --- Translate Exceptions ---
 from app.exceptions import AppException
 
+# Normalize common language codes to deep_translator-compatible codes
+LANGUAGE_CODE_MAP = {
+    # Chinese variants
+    "zh-Hans": "zh-CN",
+    "zh-Hant": "zh-TW",
+    "zh": "zh-CN",
+    "zho": "zh-CN",
+    "chi": "zh-CN",
+    # You can extend this as needed
+}
+
+def _normalize_lang_code(code: str) -> str:
+    """Map incoming language codes to deep_translator-supported codes."""
+    return LANGUAGE_CODE_MAP.get(code, code)
+
+
 class TranslationService:
     """
     Service class for handling text translation using Google Translator.
     """
+    translator = None
 
     def __init__(self):
-        self.translator = None
+        pass
 
     @classmethod
     def _get_translator(cls, source_code: str, target_code: str) -> GoogleTranslator:
@@ -33,8 +50,10 @@ class TranslationService:
             TranslateResponse with translated text or ErrorResponse if failed
         """
         try:
-            translator = TranslationService._get_translator(request.sourceCode, request.targetCode)
+            src = _normalize_lang_code(request.source_code)
+            tgt = _normalize_lang_code(request.target_code)
+            translator = TranslationService._get_translator(src, tgt)
             translated_text = translator.translate(request.text)
-            return TranslateResponse(success=True, text=translated_text)
+            return TranslateResponse(source_text=request.text, translated_text=translated_text)
         except Exception as e:
-            raise AppException(message="Translation failed", error=str(e))
+            raise AppException(status_code=502, error_code="CONNECTION_REFUSED", message="AI server is not active or connection refused", error=str(e))
