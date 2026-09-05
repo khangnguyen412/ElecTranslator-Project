@@ -23,6 +23,7 @@ import { loadCheckState, clearCheckState } from '@/utils/check-session';
  * Styles
  */
 import "@/assets/scss/loading.scss";
+import "@/assets/scss/page/exception.scss";
 
 /**
  * Utils
@@ -41,20 +42,20 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
     const startBackendStatusState = savedState?.backendStatus ?? useSelector((state: RootState) => state.check.startBackend) ?? { status: 'idle' };
 
     const resultConfig = {
-        icon: scenario === 'fallback' ? <WarningOutlined style={{ color: '#faad14', fontSize: 72 }} /> : <CloseCircleOutlined style={{ color: '#ff4d4f', fontSize: 72 }} />,
+        icon: scenario === 'fallback'
+            ? <WarningOutlined className="exception-icon exception-icon--fallback" />
+            : <CloseCircleOutlined className="exception-icon exception-icon--error" />,
         title: (
             <Space>
-                {scenario === 'fallback' ? (
-                    <span style={{ color: '#faad14' }}>Limited Mode Available</span>
-                ) : (
-                    <span style={{ color: '#ff4d4f' }}>Error Detected</span>
-                )}
+                <span className={scenario === 'fallback' ? 'exception-title exception-title--fallback' : 'exception-title exception-title--error'}>
+                    {scenario === 'fallback' ? 'Limited Mode Available' : 'Error Detected'}
+                </span>
             </Space>
         ),
         subTitle: (
-            <div style={{ textAlign: 'left', maxWidth: 450, margin: '0 auto' }}>
-                <Alert type="info" title="System Check Results" style={{ marginTop: 16 }} description={
-                    <Space orientation="vertical" size="small" style={{ width: '100%', marginTop: 8 }}>
+            <div className="exception-subtitle">
+                <Alert type="info" title="System Check Results" className="exception-alert" description={
+                    <Space orientation="vertical" size="small" className="exception-detail-list">
                         <Space>
                             {getStatusIcon(pythonStatusState?.status || 'missing')}
                             <Text strong>Python version 3.11:</Text>
@@ -101,10 +102,10 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
                         </Space>
                     </Space>
                 } />
-                <Divider style={{ margin: '16px 0', borderColor: '#fff' }} />
-                <div style={{ background: 'rgba(24,144,255,0.1)', padding: 12, borderRadius: 8 }}>
-                    <Text strong style={{ color: '#1890ff' }}>📋 What should you do:</Text>
-                    <ul style={{ margin: '8px 0 0 20px', color: '#ffffffd9' }}>
+                <Divider className="exception-divider" />
+                <div className="exception-tips">
+                    <Text strong className="exception-tips-title">📋 What should you do:</Text>
+                    <ul className="exception-tips-list">
                         <li>Check your Python environment</li>
                         <li>Check your Python library</li>
                         <li>Check your backend API</li>
@@ -114,16 +115,16 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
         ),
         extra: (
             <React.Fragment>
-                <Space wrap orientation="vertical" style={{ width: '100%' }}>
+                <Space wrap orientation="vertical" className="exception-actions">
                     {scenario == 'fallback' && (
-                        <Button key="continue" type="primary" size="large" onClick={() => { navigate('/translate', { state: { defaultTranslate: true } }); }} icon={<RocketOutlined />} style={{ width: '100%' }}                        >
+                        <Button key="continue" type="primary" size="large" onClick={() => { navigate('/translate', { state: { defaultTranslate: true } }); }} icon={<RocketOutlined />} className="exception-action-btn">
                             Continue with default translate
                         </Button>
                     )}
-                    <Button key="retry" size="large" onClick={() => { navigate('/'); }} icon={<ReloadOutlined />} style={{ width: '100%' }}                        >
+                    <Button key="retry" size="large" onClick={() => { navigate('/'); }} icon={<ReloadOutlined />} className="exception-action-btn">
                         Retry System Check
                     </Button>
-                    <Button key="how-to-fix" type="primary" size="large" onClick={() => { }} icon={<QuestionCircleOutlined />} style={{ width: '100%' }}                        >
+                    <Button key="how-to-fix" type="primary" size="large" onClick={() => { }} icon={<QuestionCircleOutlined />} className="exception-action-btn">
                         How to fix
                     </Button>
                 </Space>
@@ -140,8 +141,8 @@ const ExceptionPage: React.FC<{ scenario: 'fallback' | 'error'; }> = ({ scenario
     }, []);
 
     return (
-        <div className="flex-loading flex-col flex-col-fixed">
-            <Result status="warning" style={{ padding: '24px' }} {...resultConfig} />
+        <div className="flex-loading flex-col flex-col-fixed exception-page">
+            <Result status="warning" className="exception-result" {...resultConfig} />
         </div>
     );
 

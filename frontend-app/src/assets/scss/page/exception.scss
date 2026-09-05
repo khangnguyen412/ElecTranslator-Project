@@ -1,0 +1,84 @@
+// ============================================
+// ExceptionPage styles
+// Previously inline in ExceptionPage.tsx — moved here (Aug 2026)
+// ============================================
+
+.exception-page {
+    // Ant Design Result container
+    .exception-result {
+        padding: 24px;
+    }
+
+    // Status icons (72px, colored by scenario)
+    .exception-icon {
+        font-size: 72px;
+
+        &--fallback {
+            color: #faad14;
+        }
+
+        &--error {
+            color: #ff4d4f;
+        }
+    }
+
+    // Result title color by scenario
+    .exception-title {
+        &--fallback {
+            color: #faad14;
+        }
+
+        &--error {
+            color: #ff4d4f;
+        }
+    }
+
+    // Subtitle wrapper
+    .exception-subtitle {
+        text-align: left;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
+    // "System Check Results" alert
+    .exception-alert {
+        margin-top: 16px;
+    }
+
+    // Vertical list of check results
+    .exception-detail-list {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    // Divider between results and tips
+    .exception-divider {
+        margin: 16px 0;
+        border-color: #fff;
+    }
+
+    // "What should you do" box
+    .exception-tips {
+        background: rgba(24, 144, 255, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+
+        .exception-tips-title {
+            color: #1890ff;
+        }
+
+        .exception-tips-list {
+            margin: 8px 0 0 20px;
+            color: #ffffffd9;
+        }
+    }
+
+    // Action buttons area
+    .exception-actions {
+        width: 100%;
+
+        .exception-action-btn {
+            width: 100%;
+        }
+    }
+}

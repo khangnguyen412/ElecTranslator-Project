@@ -111,15 +111,30 @@ ElecTranslator
 │  │  │  ├─ hero.png
 │  │  │  ├─ react.svg
 │  │  │  ├─ scss
-│  │  │  │  └─ loading.scss
+│  │  │  │  ├─ loading.scss
+│  │  │  │  └─ page
+│  │  │  │     ├─ checking.scss
+│  │  │  │     └─ exception.scss
 │  │  │  └─ vite.svg
 │  │  ├─ components
-│  │  │  └─ Popup.tsx
+│  │  │  ├─ checking
+│  │  │  │  ├─ StepBackendApi.tsx
+│  │  │  │  ├─ StepPythonEnvironment.tsx
+│  │  │  │  └─ StepPythonLibrary.tsx
+│  │  │  ├─ Popup.tsx
+│  │  │  └─ translation
+│  │  │     ├─ AdvancedSettingsModal.tsx
+│  │  │     └─ OptionsPanel.tsx
 │  │  ├─ config
 │  │  │  ├─ app.config.ts
-│  │  │  └─ language.config.ts
+│  │  │  ├─ language.config.ts
+│  │  │  └─ translationOptions.config.ts
 │  │  ├─ DefaultTemplate.tsx
 │  │  ├─ env.d.ts
+│  │  ├─ hook
+│  │  │  ├─ useBackendCheck.ts
+│  │  │  ├─ usePythonCheck.ts
+│  │  │  └─ usePythonLibraryCheck.ts
 │  │  ├─ index.css
 │  │  ├─ main.tsx
 │  │  ├─ page
@@ -127,7 +142,7 @@ ElecTranslator
 │  │  │  ├─ ExceptionPage.tsx
 │  │  │  ├─ layout
 │  │  │  │  └─ MainLayout.tsx
-│  │  │  └─ TranslationPanel.tsx
+│  │  │  └─ TranslatePage.tsx
 │  │  ├─ redux
 │  │  │  ├─ features
 │  │  │  │  ├─ check.ts
@@ -143,13 +158,16 @@ ElecTranslator
 │  │  │  ├─ ORCServices.ts
 │  │  │  ├─ StoreServices.ts
 │  │  │  └─ TranslateServices.ts
-│  │  └─ types
-│  │     ├─ check.type.ts
-│  │     ├─ common.type.ts
-│  │     ├─ error.type.ts
-│  │     ├─ ocr.type.ts
-│  │     ├─ store.type.ts
-│  │     └─ translate.type.ts
+│  │  ├─ types
+│  │  │  ├─ check.type.ts
+│  │  │  ├─ common.type.ts
+│  │  │  ├─ error.type.ts
+│  │  │  ├─ ocr.type.ts
+│  │  │  ├─ store.type.ts
+│  │  │  └─ translate.type.ts
+│  │  └─ utils
+│  │     ├─ check-session.ts
+│  │     └─ checking-icon.tsx
 │  ├─ tsconfig.app.json
 │  ├─ tsconfig.json
 │  ├─ tsconfig.node.json
