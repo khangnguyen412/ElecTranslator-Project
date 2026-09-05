@@ -56,6 +56,11 @@ class PaddleOCRService:
                 img_bytes = base64.b64decode(image_input)
                 nparr = np.frombuffer(img_bytes, np.uint8)
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            if img is not None and img.ndim == 2:
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            elif img is not None and img.shape[2] == 4:
+                img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
         except Exception as e:
             return None
         return img
@@ -126,14 +131,13 @@ class PaddleOCRService:
                     use_textline_orientation=False,
                     lang=paddle_lang,
                     det_db_thresh=0.3,
-                    det_db_box_thresh=0.5,
-                    det_db_unclip_ratio=0.5,
+                    det_db_box_thresh=0.6,
+                    det_db_unclip_ratio=1.5,
                     rec_batch_num=6,
                     enable_mkldnn=False,
                 )
             cls._current_lang = paddle_lang
         except Exception as e:
-            devnull.close()
             raise RuntimeError(f"Failed to initialize PaddleOCR: {str(e)}")
         finally:
             devnull.close()
@@ -145,7 +149,7 @@ class PaddleOCRService:
         Main async service function to perform OCR.
         ### Args:
             - request: OCRRequest containing image_input and lang.
-        ### Returns: 
+        ### Returns:
             - a dictionary with 'success', 'text', and optional 'error'.
         """
         try:
@@ -156,6 +160,9 @@ class PaddleOCRService:
             img = PaddleOCRService._decode_image(request.base64_text)
             if img is None:
                 return {"success": False, "error": "Failed to decode image or image not found"}
+
+            # Debug: save preprocessed image
+            # cv2.imwrite("debug_preprocessed.png", img)
 
             # Perform Inference (Suppressing logs during inference)
             result = engine.predict(img)

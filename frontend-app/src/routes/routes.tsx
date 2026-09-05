@@ -5,18 +5,17 @@ import { lazy, Suspense } from "react";
 import type { RouteObject } from "react-router-dom";
 
 const LoadingPage = lazy(() => import('@/page/CheckingPage'));
-const TranslationPage = lazy(() => import('@/page/TranslationPanel'));
+const TranslationPage = lazy(() => import('@/page/TranslatePage'));
 const ExceptionPage = lazy(() => import('@/page/ExceptionPage'));
 
 export const routes: RouteObject[] = [
     {
-        path: '/',
+        // path: '/',
         element: (
             <Suspense>
                 <LoadingPage />
             </Suspense>
         ),
-        index: true,
     },
     {
         path: '/fallback',
@@ -35,11 +34,11 @@ export const routes: RouteObject[] = [
         ),
     },
     {
-        path: '/translate',
-        // path: '/',
+        // path: '/translate',
+        path: '/',
         element: (
             <Suspense>
-                <TranslationPage defaultTranslate={false} />
+                <TranslationPage />
             </Suspense>
         ),
     }

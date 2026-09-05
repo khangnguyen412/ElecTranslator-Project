@@ -234,7 +234,7 @@ const setupBackendCleanup = () => {
             }
         }
         catch {
-            console.log('[Cleanup Error] No process found — fine');
+            console.log('[Cleanup] No process found — fine');
         }
     });
 };

@@ -19,6 +19,7 @@ import { Progress, Steps, Typography } from 'antd';
  * Styles
  */
 import "@/assets/scss/loading.scss";
+import "@/assets/scss/page/checking.scss";
 
 /**
  * Type
@@ -208,7 +209,6 @@ const CheckingPage: React.FC = () => {
     const stepConfig = {
         orientation: 'vertical' as const,
         current: getCompletionStep(),
-        style: { backgroundColor: 'transparent' },
         items: [
             getStepPythonEnvironment(pythonStatus),
             getStepPythonLibrary(pythonLibraryStatus),
@@ -222,7 +222,7 @@ const CheckingPage: React.FC = () => {
     const progressConfig = {
         percent: scenario === 'idle' ? Math.min(getCompletionStep() * (100 / 4), 100) : 100,
         format: (percent: any) => {
-            if (scenario === 'idle') return (<span style={{ color: '#ffffff' }}>{Math.round(percent || 0)}%</span>);
+            if (scenario === 'idle') return (<span className="progress-percent">{Math.round(percent || 0)}%</span>);
             return isAllReady && '✅ All Systems Ready';
         },
         strokeColor: { '0%': '#108ee9', '50%': '#00d4ff', '100%': isAllReady ? '#52c41a' : '#faad14' },
@@ -247,7 +247,7 @@ const CheckingPage: React.FC = () => {
                             <div className="inner three"></div>
                         </div>
                     </div>
-                    <Typography.Title level={3} style={{ color: '#fff', margin: '16px 0 8px' }}>
+                    <Typography.Title level={3}>
                         ElecTranslator
                     </Typography.Title>
                     <Text type="secondary">Checking translation engine...</Text>
@@ -261,7 +261,7 @@ const CheckingPage: React.FC = () => {
                 {/* Overall Progress Bar */}
                 <div className="progress-section">
                     <Progress {...progressConfig} />
-                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4, color: '#ffffffa6' }}>
+                    <Text type="secondary" className="progress-status-text">
                         {scenario === 'idle' ? 'Please wait, checking system requirements...' : isAllReady ? '🚀 Ready to translate!' : '🔧 Some features limited - see details above'}
                     </Text>
                 </div>
@@ -269,7 +269,7 @@ const CheckingPage: React.FC = () => {
                 {/* Auto-continue hint */}
                 {scenario !== 'idle' && (
                     <div className="auto-continue-hint">
-                        <Text type="secondary" style={{ fontSize: 12, color: '#ffffffa6' }}>
+                        <Text type="secondary" className="auto-continue-text">
                             Auto-continuing in <strong>3</strong> seconds...
                         </Text>
                     </div>
