@@ -22,7 +22,7 @@ export type TranslateResponse = {
     translated_text: string
 }
 
-export const NormalTranslateResponse = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+export const NormalTranslateThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
     'translate/requestNormal',
     async (data, { rejectWithValue }) => {
         try {
@@ -36,7 +36,7 @@ export const NormalTranslateResponse = createAsyncThunk<TranslateResponse, Promp
 )
 
 
-export const requestAIThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+export const AITranslateThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
     'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
@@ -58,26 +58,26 @@ const TranslateSlice = createSlice({
     } as TranslateState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(NormalTranslateResponse.pending, (state) => {
+        builder.addCase(NormalTranslateThunk.pending, (state) => {
             state.loading = true;
         })
-        builder.addCase(NormalTranslateResponse.fulfilled, (state, action) => {
+        builder.addCase(NormalTranslateThunk.fulfilled, (state, action) => {
             state.loading = false;
             state.data = action.payload;
         })
-        builder.addCase(NormalTranslateResponse.rejected, (state, action) => {
+        builder.addCase(NormalTranslateThunk.rejected, (state, action) => {
             state.loading = false;
             state.error = action?.payload?.error;
         })
 
-        builder.addCase(requestAIThunk.pending, (state) => {
+        builder.addCase(AITranslateThunk.pending, (state) => {
             state.loading = true;
         })
-        builder.addCase(requestAIThunk.fulfilled, (state, action) => {
+        builder.addCase(AITranslateThunk.fulfilled, (state, action) => {
             state.loading = false;
             state.data = action.payload;
         })
-        builder.addCase(requestAIThunk.rejected, (state, action) => {
+        builder.addCase(AITranslateThunk.rejected, (state, action) => {
             state.loading = false;
             state.error = action?.payload?.error;
         })

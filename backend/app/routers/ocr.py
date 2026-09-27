@@ -14,11 +14,11 @@ router = APIRouter()
 
 @router.post("")
 async def process_ocr(request: OCRRequest) -> ApiResponse:
-    orc_request = OCRServiceRequest(
+    ocr_request = OCRServiceRequest(
         base64_text=request.base64_text,
         ocr_lang=request.ocr_lang,
     )
-    ocr_result = await PaddleOCRService.get_ocr(orc_request)
+    ocr_result = await PaddleOCRService.get_ocr(ocr_request)
 
     if request.mode == "Normal":
         translate_request = TranslateRequest(

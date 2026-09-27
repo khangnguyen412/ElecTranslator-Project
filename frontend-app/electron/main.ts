@@ -12,7 +12,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
  * Module
  */
 import { captureRegionInteractive } from './module/screenshot/screenshot'
-import { pythonProcesses, ocrRequests, getOrCreatePythonProcess } from "./module/orc/ocrRead";
+import { pythonProcesses, ocrRequests, getOCRCreatePythonProcess } from "./module/ocr/ocrRead";
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
 import { startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
@@ -116,7 +116,7 @@ ipcMain.handle('check-python-library-requirements', async (event) => {
  */
 ipcMain.handle('ocr-image-python', async (event, base64Data: string, lang: string = "en") => {
     return new Promise((resolve) => {
-        const pythonProcess = getOrCreatePythonProcess(lang);
+        const pythonProcess = getOCRCreatePythonProcess(lang);
 
         /**
          * Push resolve function to queue for this language

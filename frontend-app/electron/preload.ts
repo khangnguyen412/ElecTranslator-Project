@@ -20,7 +20,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /**
      * Trigger Capture
      */
-    onTriggerCapture: (callback: () => void) => ipcRenderer.on('trigger-translate', callback),
+    onTriggerCapture: (callback: () => void) => {
+        ipcRenderer.removeAllListeners('trigger-translate');
+        ipcRenderer.on('trigger-translate', callback)
+    },
     removeTriggerCapture: (callback: () => void) => ipcRenderer.removeListener('trigger-translate', callback),
 
     /**

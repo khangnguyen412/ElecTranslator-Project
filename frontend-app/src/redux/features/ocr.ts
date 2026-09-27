@@ -4,7 +4,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 /**
  * Service
  */
-import { orcService } from "@/services/ORCServices";
+import { ocrService } from "@/services/OCRServices";
 
 /**
  * Type
@@ -12,19 +12,19 @@ import { orcService } from "@/services/ORCServices";
 import type { OCRResponse, OCRRequest } from "@/types/ocr.type";
 import type { ErrorType } from "@/types/error.type";
 
-export interface ORCState {
+export interface OCRState {
     loading: boolean;
-    orc: OCRResponse;
+    ocr: OCRResponse;
     error: ErrorType | undefined;
     message?: string;
 }
 
-export const requestORCThunk = createAsyncThunk<OCRResponse, OCRRequest, { rejectValue: ErrorType }>(
-    'orc/requestORCCheck',
+export const requestOCRThunk = createAsyncThunk<OCRResponse, OCRRequest, { rejectValue: ErrorType }>(
+    'ocr/requestOCRCheck',
     async (params, { rejectWithValue }) => {
         try {
-            const ORCVersion = await orcService(params);
-            return ORCVersion;
+            const OCRVersion = await ocrService(params);
+            return OCRVersion;
         } catch (error: any) {
             const errorData: ErrorType = {
                 error_code: error?.error_code || "EXCEPTION",
@@ -36,30 +36,30 @@ export const requestORCThunk = createAsyncThunk<OCRResponse, OCRRequest, { rejec
     }
 )
 
-const ORCSlice = createSlice({
-    name: 'orc',
+const OCRSlice = createSlice({
+    name: 'ocr',
     initialState: {
         loading: false,
-        orc: { success: false, message: '', data: {} },
+        ocr: { success: false, message: '', data: {} },
         error: undefined,
         message: undefined,
-    } as ORCState,
+    } as OCRState,
     reducers: {},
     extraReducers: (builder) => {
         /**
          * Check Python Status
          */
-        builder.addCase(requestORCThunk.pending, (state) => {
+        builder.addCase(requestOCRThunk.pending, (state) => {
             state.loading = true;
         })
-        builder.addCase(requestORCThunk.fulfilled, (state, action) => {
+        builder.addCase(requestOCRThunk.fulfilled, (state, action) => {
             state.loading = false;
-            state.orc = action.payload;
+            state.ocr = action.payload;
         })
-        builder.addCase(requestORCThunk.rejected, (state, action) => {
+        builder.addCase(requestOCRThunk.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload || { error_code: '', message: '' };
         })
     }
 })
-export default ORCSlice.reducer;
+export default OCRSlice.reducer;

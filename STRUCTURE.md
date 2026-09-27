@@ -25,7 +25,7 @@ ElecTranslator
 │  │  │  ├─ ai_schema.py
 │  │  │  ├─ error_schema.py
 │  │  │  ├─ health_schema.py
-│  │  │  ├─ orc_schema.py
+│  │  │  ├─ ocr_schema.py
 │  │  │  ├─ translate_schema.py
 │  │  │  └─ __init__.py
 │  │  └─ services
@@ -48,9 +48,19 @@ ElecTranslator
 │  │  └─ logo.png
 │  ├─ dist
 │  │  ├─ assets
+│  │  │  ├─ button-CNRPjJaL.js
+│  │  │  ├─ check-session-5E_iGCuF.js
+│  │  │  ├─ check-session-CF9k1ngw.css
+│  │  │  ├─ CheckingPage-BO_kDgYn.js
+│  │  │  ├─ CheckingPage-CKKcR3aS.css
+│  │  │  ├─ ExceptionPage-CQFPhXge.js
+│  │  │  ├─ ExceptionPage-DZ7g0v-k.css
 │  │  │  ├─ index-B5BXDqMa.css
-│  │  │  ├─ index-Dt9GMaEd.js
-│  │  │  └─ logo-Bt3hN40y.png
+│  │  │  ├─ index-BYnr_Bpz.js
+│  │  │  ├─ logo-Bt3hN40y.png
+│  │  │  ├─ row-D5DCeyLK.js
+│  │  │  ├─ TranslatePage-BUMuCbuO.js
+│  │  │  └─ typography-DYC3FpkZ.js
 │  │  ├─ favicon.svg
 │  │  ├─ icons.svg
 │  │  └─ index.html
@@ -78,7 +88,7 @@ ElecTranslator
 │  │  │  ├─ checking
 │  │  │  │  ├─ serviceCheck.ts
 │  │  │  │  └─ serviceStartup.ts
-│  │  │  ├─ orc
+│  │  │  ├─ ocr
 │  │  │  │  └─ ocrRead.ts
 │  │  │  ├─ screenshot
 │  │  │  │  ├─ screenshot.ts
@@ -124,7 +134,9 @@ ElecTranslator
 │  │  │  ├─ Popup.tsx
 │  │  │  └─ translation
 │  │  │     ├─ AdvancedSettingsModal.tsx
-│  │  │     └─ OptionsPanel.tsx
+│  │  │     ├─ InputCard.tsx
+│  │  │     ├─ OptionsPanel.tsx
+│  │  │     └─ ResultCard.tsx
 │  │  ├─ config
 │  │  │  ├─ app.config.ts
 │  │  │  ├─ language.config.ts
@@ -134,7 +146,9 @@ ElecTranslator
 │  │  ├─ hook
 │  │  │  ├─ useBackendCheck.ts
 │  │  │  ├─ usePythonCheck.ts
-│  │  │  └─ usePythonLibraryCheck.ts
+│  │  │  ├─ usePythonLibraryCheck.ts
+│  │  │  ├─ useTranslation.ts
+│  │  │  └─ useTranslationSettings.ts
 │  │  ├─ index.css
 │  │  ├─ main.tsx
 │  │  ├─ page
@@ -146,7 +160,7 @@ ElecTranslator
 │  │  ├─ redux
 │  │  │  ├─ features
 │  │  │  │  ├─ check.ts
-│  │  │  │  ├─ orc.ts
+│  │  │  │  ├─ ocr.ts
 │  │  │  │  ├─ store.ts
 │  │  │  │  └─ translate.ts
 │  │  │  ├─ store.ts
@@ -155,7 +169,7 @@ ElecTranslator
 │  │  │  └─ routes.tsx
 │  │  ├─ services
 │  │  │  ├─ CheckServices.ts
-│  │  │  ├─ ORCServices.ts
+│  │  │  ├─ OCRServices.ts
 │  │  │  ├─ StoreServices.ts
 │  │  │  └─ TranslateServices.ts
 │  │  ├─ types

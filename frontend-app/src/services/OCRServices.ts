@@ -6,7 +6,7 @@ import { postRequest } from '@/api/axios';
  */
 import type { OCRRequest } from '@/types/ocr.type';
 
-export const orcService = async (data: OCRRequest): Promise<any> => {
+export const ocrService = async (data: OCRRequest): Promise<any> => {
     try {
         return await postRequest('/ocr', data, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
     } catch (error) {

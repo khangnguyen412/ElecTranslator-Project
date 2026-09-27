@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import TranslateSlice from '@/redux/features/translate';
 import CheckSlice from '@/redux/features/check';
-import ORCSlice from '@/redux/features/orc';
+import OCRSlice from '@/redux/features/ocr';
 import StoreSlice from '@/redux/features/store'
 
 
@@ -10,7 +10,7 @@ export const store = configureStore({
     reducer: {
         translate: TranslateSlice,
         check: CheckSlice,
-        orc: ORCSlice,
+        ocr: OCRSlice,
         store: StoreSlice,
     },
 });
