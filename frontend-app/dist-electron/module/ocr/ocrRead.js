@@ -1,64 +1,62 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getOCRCreatePythonProcess = exports.ocrRequests = exports.pythonProcesses = void 0;
 /* eslint-disable */
-import { app } from "electron";
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import path from "path";
-
+const electron_1 = require("electron");
+const child_process_1 = require("child_process");
+const path_1 = __importDefault(require("path"));
 /**
  * Manage Python processes by language, avoid creating multiple processes for the same language
  */
-export const pythonProcesses: { [lang: string]: ChildProcessWithoutNullStreams } = {};
-
+exports.pythonProcesses = {};
 /**
  * Store resolve functions for each language, to handle results from Python process
  */
-export const ocrRequests: { [lang: string]: ((value: any) => void)[] } = {};
-
-export const getOrCreatePythonProcess = (lang: string): ChildProcessWithoutNullStreams => {
-    if (pythonProcesses[lang]) {
-        return pythonProcesses[lang];
+exports.ocrRequests = {};
+const getOCRCreatePythonProcess = (lang) => {
+    if (exports.pythonProcesses[lang]) {
+        return exports.pythonProcesses[lang];
     }
-
-    const scriptPath = app.isPackaged ? path.join(process.resourcesPath, 'resources', 'paddleORC.py') : path.join(app.getAppPath(), 'python/module/paddleORC.py');
-
+    const scriptPath = electron_1.app.isPackaged ? path_1.default.join(process.resourcesPath, 'resources', 'paddleORC.py') : path_1.default.join(electron_1.app.getAppPath(), 'python/module/paddleORC.py');
     /**
      * Start Python process and keep it running continuously throughout the application lifecycle
      */
     console.log(`Start Python process for ${lang}`);
-    const pythonProcess = spawn('python', ['-u', scriptPath, lang]);
-    pythonProcesses[lang] = pythonProcess;
-    ocrRequests[lang] = [];
-
+    const pythonProcess = (0, child_process_1.spawn)('python', ['-u', scriptPath, lang]);
+    exports.pythonProcesses[lang] = pythonProcess;
+    exports.ocrRequests[lang] = [];
     let stdoutBuffer = '';
-
     /**
      * Listen for data from Python when stdout emits data
      */
     pythonProcess.stdout.on('data', (data) => {
         stdoutBuffer += data.toString();
-
         /**
          * Parse JSON results from Python process stdout
          */
-        let lineIndex: number;
+        let lineIndex;
         while ((lineIndex = stdoutBuffer.indexOf('\n')) !== -1) {
             const line = stdoutBuffer.substring(0, lineIndex).trim();
             stdoutBuffer = stdoutBuffer.substring(lineIndex + 1);
-
             if (line.startsWith('{') && line.endsWith('}')) {
                 try {
                     const result = JSON.parse(line);
                     /**
                      * Resolve next request in queue for this language with result
                      */
-                    const resolveNext = ocrRequests[lang].shift();
-                    if (resolveNext) resolveNext(result);
-                } catch (e: any) {
+                    const resolveNext = exports.ocrRequests[lang].shift();
+                    if (resolveNext)
+                        resolveNext(result);
+                }
+                catch (e) {
                     console.error("Python process error parsing JSON:", e);
                 }
             }
         }
     });
-
     /**
      * Listen for data from Python when stderr emits data
      */
@@ -69,20 +67,20 @@ export const getOrCreatePythonProcess = (lang: string): ChildProcessWithoutNullS
             console.error(`Log:`, msg);
         }
     });
-
     /**
      * If Python process crashes unexpectedly, clear cache and restart it next time
      */
     pythonProcess.on('close', () => {
-        delete pythonProcesses[lang];
+        delete exports.pythonProcesses[lang];
         /**
          * Clear cache for this language if Python process crashes unexpectedly
          */
-        while (ocrRequests[lang]?.length > 0) {
-            const resolveNext = ocrRequests[lang].shift();
-            if (resolveNext) resolveNext({ success: false, error: "Python process crashed unexpectedly." });
+        while (exports.ocrRequests[lang]?.length > 0) {
+            const resolveNext = exports.ocrRequests[lang].shift();
+            if (resolveNext)
+                resolveNext({ success: false, error: "Python process crashed unexpectedly." });
         }
     });
-
     return pythonProcess;
-}
+};
+exports.getOCRCreatePythonProcess = getOCRCreatePythonProcess;

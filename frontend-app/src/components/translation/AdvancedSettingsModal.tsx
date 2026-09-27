@@ -58,7 +58,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
     const [newModelInput, setNewModelInput] = useState<Record<string, string>>({});
 
     return (
-        <Modal title="Advanced Translation Settings" open={open} onCancel={onCancel} width={900}
+        <Modal title="Advanced Translation Settings" open={open} onCancel={onCancel} width={1200}
             footer={[
                 <Button key="cancel" onClick={onCancel}>Cancel</Button>,
                 <Button key="save" type="primary" onClick={onSave} icon={<SettingOutlined />}>Save Settings</Button>,
@@ -129,6 +129,8 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                 onChange={setDefaultProviderId}
                                 style={{ width: 140 }}
                                 options={providers.map(p => ({ value: p.id, label: p.name }))}
+                                allowClear
+                                placeholder="Select..."
                             />
                         </Space>
                     }>

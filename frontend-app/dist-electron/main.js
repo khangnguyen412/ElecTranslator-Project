@@ -14,7 +14,7 @@ const electron_devtools_installer_1 = require("@tomjs/electron-devtools-installe
  * Module
  */
 const screenshot_1 = require("./module/screenshot/screenshot");
-const ocrRead_1 = require("./module/orc/ocrRead");
+const ocrRead_1 = require("./module/ocr/ocrRead");
 const serviceCheck_1 = require("./module/checking/serviceCheck");
 const serviceStartup_1 = require("./module/checking/serviceStartup");
 const store_1 = __importDefault(require("./module/store/store"));
@@ -108,7 +108,7 @@ electron_1.ipcMain.handle('check-python-library-requirements', async (event) => 
  */
 electron_1.ipcMain.handle('ocr-image-python', async (event, base64Data, lang = "en") => {
     return new Promise((resolve) => {
-        const pythonProcess = (0, ocrRead_1.getOrCreatePythonProcess)(lang);
+        const pythonProcess = (0, ocrRead_1.getOCRCreatePythonProcess)(lang);
         /**
          * Push resolve function to queue for this language
          */

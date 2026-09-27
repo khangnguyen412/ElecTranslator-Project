@@ -1,9 +1,10 @@
 import requests
-import httpx
+import sys
+from httpx import HTTPStatusError, ConnectError, TimeoutException, AsyncClient
 
 
 from app.schema import AiTranslateRequest, AiTranslateResponse, AiStatusResponse, AiModelResponse, ErrorResponse
-from app.exceptions import AppException, ServiceConnectionError
+from app.exceptions import AppException, ServiceConnectionError, NotFoundError, ExceptionError
 
 
 class AiService:
@@ -135,8 +136,8 @@ class AiService:
             endpoint = f"{request.url.rstrip('/')}/chat/completions"
 
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post(endpoint, json=payload, headers=headers, timeout=30)
+            async with AsyncClient() as client:
+                response = await client.post(endpoint, json=payload, headers=headers, timeout=60)
                 response.raise_for_status()
                 data = response.json()
 
@@ -146,8 +147,24 @@ class AiService:
                     full_text = data["choices"][0]["message"]["content"]
 
             return AiTranslateResponse(source_text=request.text, translated_text=full_text)
+        except HTTPStatusError as e:
+            resp = e.response
+            code = "PROVIDER_ERROR"
+            message = str(e)
+            try:
+                err_data = resp.json().get("error", {})
+                if isinstance(err_data, dict):
+                    code = str(err_data.get("code", "PROVIDER_ERROR"))
+                    message = err_data.get("message", str(e))
+            except Exception:
+                pass
+            raise AppException(status_code=resp.status_code, error_code=code, message=message, error=None)
+        except ConnectError as e:
+            raise AppException(status_code=502, error_code="CONNECT_ERROR", message="AI server is not active or connection refused", error=str(e))
+        except TimeoutException as e:
+            raise AppException(status_code=504, error_code="GATEWAY_TIMEOUT", message="AI server request timed out (60s)", error=str(e))
         except Exception as e:
-            raise AppException(status_code=502, error_code="CONNECTION_REFUSED", message="AI server is not active or connection refused", error=str(e))
+            raise ExceptionError(status_code=500, error_code="UNKNOWN_ERROR", message="Translation failed unexpectedly", error=str(e))
 
     @staticmethod
     async def check_active(base_url: str, api_key: str) -> AiStatusResponse | ErrorResponse:

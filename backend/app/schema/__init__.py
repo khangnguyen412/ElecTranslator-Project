@@ -1,4 +1,4 @@
-from .orc_schema import OCRRequest, OCRServiceRequest, OCRResponse
+from .ocr_schema import OCRRequest, OCRServiceRequest, OCRResponse
 from .translate_schema import TranslateRequest, TranslateResponse
 from .ai_schema import AiTranslateRequest, AiTranslateResponse, AiModelResponse, AiStatusResponse
 from .error_schema import ErrorResponse
