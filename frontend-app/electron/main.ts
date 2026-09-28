@@ -1,7 +1,6 @@
 /* eslint-disable */
-import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, ipcMain, globalShortcut, clipboard, screen, } from 'electron'; 
 import path from "path";
-import { spawn } from 'child_process';
 
 /**
  * React Developer Tools
@@ -16,6 +15,11 @@ import { pythonProcesses, ocrRequests, getOCRCreatePythonProcess } from "./modul
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
 import { startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
+
+/**
+ * Set app user model ID
+ */
+app.setAppUserModelId('com.electranslator.app');
 
 /**
  * Check if application is running in development mode
@@ -144,11 +148,125 @@ ipcMain.handle('capture-screen', async () => {
     }
 });
 
+/**
+ * Show translated text notification
+ */
+let overlayWindow: BrowserWindow | null = null;
+let overlayReady = false;
+let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Copy text
+ */
+ipcMain.handle('copy-text', (_event, text: string) => {
+    clipboard.writeText(text || '');
+    return true;
+});
+
+/**
+ * Hide overlay
+ */
+ipcMain.handle('hide-overlay', () => {
+    overlayWindow?.hide();
+    return true;
+});
+
+function createOverlayWindow() {
+    overlayReady = false;
+
+    overlayWindow = new BrowserWindow({
+        width: 520,
+        height: 320,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        focusable: true,
+
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        resizable: false,
+        show: false,
+
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+
+    if (isDev) {
+        overlayWindow.loadURL('http://localhost:5173/overlay');
+    } else {
+        overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    }
+}
+
+/**
+ * Show translated text overlay
+ */
+ipcMain.handle('show-translated-text', async (_event, title: string, body: string) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) {
+        createOverlayWindow();
+    }
+
+    const win = overlayWindow!;
+
+    /**
+     * Wait for overlay to be ready
+     */
+    if (!overlayReady) {
+        await new Promise<void>((resolve) => {
+            const timeout = setTimeout(() => {
+                resolve();
+            }, 3000);
+
+            win.webContents.once('did-finish-load', () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+        });
+    }
+
+    const display = screen.getPrimaryDisplay();
+    const { workArea } = display;
+
+    /**
+     * Set overlay position
+     */
+    win.setPosition(workArea.x + workArea.width - 540, workArea.y + 80);
+
+    /**
+     * Send translated text to overlay
+     */
+    win.webContents.send('display-overlay-translation', {
+        title,
+        body,
+    });
+
+    /**
+     * Show overlay inactive avoid focus stealing
+     */
+    win.showInactive();
+
+    if (overlayHideTimer) {
+        clearTimeout(overlayHideTimer);
+    }
+
+    overlayHideTimer = setTimeout(() => {
+        if (!win.isDestroyed()) { win.hide(); }
+    }, 10000);
+
+    return true;
+});
+
+
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 1200,
         height: 800,
-        icon: path.join(__dirname, "../assets/logo.png"),
+        icon: app.isPackaged ? path.join(process.resourcesPath, "assets", "logo.ico") : path.join(path.resolve(__dirname, ".."), "assets", "logo.png"),
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: true,
@@ -185,7 +303,8 @@ app.whenReady().then(async () => {
         await installExtension(REACT_DEVELOPER_TOOLS)
         await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
     }
-    createWindow()
+    createWindow();
+    createOverlayWindow();
     setupBackendCleanup();
 })
 

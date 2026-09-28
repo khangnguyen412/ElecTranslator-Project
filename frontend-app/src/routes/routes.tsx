@@ -7,6 +7,7 @@ import type { RouteObject } from "react-router-dom";
 const LoadingPage = lazy(() => import('@/page/CheckingPage'));
 const TranslationPage = lazy(() => import('@/page/TranslatePage'));
 const ExceptionPage = lazy(() => import('@/page/ExceptionPage'));
+const OverlayTranslationPage = lazy(() => import('@/page/Overlay'));
 
 export const routes: RouteObject[] = [
     {
@@ -39,6 +40,14 @@ export const routes: RouteObject[] = [
         element: (
             <Suspense>
                 <TranslationPage />
+            </Suspense>
+        ),
+    },
+    {
+        path: '/overlay',
+        element: (
+            <Suspense>
+                <OverlayTranslationPage />
             </Suspense>
         ),
     }

@@ -2,144 +2,162 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.captureRegionInteractive = void 0;
 const electron_1 = require("electron");
+const canvas_1 = require("canvas");
+const util_1 = require("util");
+const url_1 = require("url");
 const getResourcePath_1 = require("../../utils/getResourcePath");
 /**
  * Disable hardware acceleration (Fix black screen issue when capturing video or other apps due to GPU conflict.)
  */
 electron_1.app.disableHardwareAcceleration();
 /**
- * Capture region by coordinate (using desktopCapturer + canvas crop)
- * @param x
- * @param y
- * @param width
- * @param height
- * @returns
+ * Compose all screen captures and crop to the selected region.
  */
-const captureRegionByCoord = async (x, y, width, height) => {
-    /**
-     * Get scale factor (for Retina display, and Windows display)
-     */
-    const { scaleFactor } = electron_1.screen.getPrimaryDisplay();
-    const physicalX = Math.round(x * scaleFactor);
-    const physicalY = Math.round(y * scaleFactor);
-    const physicalWidth = Math.round(width * scaleFactor);
-    const physicalHeight = Math.round(height * scaleFactor);
-    /**
-     * Capture full screen with physical size
-     */
+const composeScreens = async (x, y, width, height) => {
+    const displays = electron_1.screen.getAllDisplays();
+    // Calculate bounding box of ALL displays
+    const minX = Math.min(...displays.map((d) => d.bounds.x));
+    const minY = Math.min(...displays.map((d) => d.bounds.y));
+    const maxX = Math.max(...displays.map((d) => d.bounds.x + d.bounds.width));
+    const maxY = Math.max(...displays.map((d) => d.bounds.y + d.bounds.height));
+    const totalWidth = maxX - minX;
+    const totalHeight = maxY - minY;
     const sources = await electron_1.desktopCapturer.getSources({
         types: ['screen'],
         thumbnailSize: {
-            width: electron_1.screen.getPrimaryDisplay().size.width * scaleFactor,
-            height: electron_1.screen.getPrimaryDisplay().size.height * scaleFactor,
+            width: maxX - minX,
+            height: maxY - minY,
         },
     });
-    /**
-     * Get original image as nativeImage
-     */
-    const fullImage = sources[0].thumbnail;
-    /**
-     * Crop physical coordinate
-     */
-    const cropped = fullImage.crop({
-        x: physicalX,
-        y: physicalY,
-        width: physicalWidth,
-        height: physicalHeight,
+    const canvas = new canvas_1.Canvas(totalWidth, totalHeight);
+    const ctx = canvas.getContext('2d');
+    const loadImage = (0, util_1.promisify)((buf, cb) => {
+        const img = new canvas_1.Image();
+        img.onload = () => cb(null, img);
+        img.onerror = (err) => cb(err instanceof Error ? err : new Error('Image load failed'));
+        img.src = buf;
     });
-    /**
-     * Return dataURL standard (PNG)
-     */
-    return cropped.toDataURL();
+    for (const source of sources) {
+        const imgBuffer = source.thumbnail.toPNG();
+        const img = await loadImage(imgBuffer);
+        // Match source to display
+        const displayIndex = displays.findIndex((d) => String(d.id) === source.display_id);
+        if (displayIndex === -1)
+            continue;
+        const display = displays[displayIndex];
+        const drawX = display.bounds.x - minX;
+        const drawY = display.bounds.y - minY;
+        ctx.drawImage(img, drawX, drawY);
+    }
+    // Validate crop region is within canvas bounds
+    const clampedX = Math.max(0, Math.min(x, totalWidth - 1));
+    const clampedY = Math.max(0, Math.min(y, totalHeight - 1));
+    const clampedW = Math.min(width, totalWidth - clampedX);
+    const clampedH = Math.min(height, totalHeight - clampedY);
+    if (clampedW < 1 || clampedH < 1) {
+        throw new Error(`Crop region is invalid: ${clampedW}x${clampedH} on canvas ${totalWidth}x${totalHeight}`);
+    }
+    // Crop to selection region
+    const result = new canvas_1.Canvas(clampedW, clampedH);
+    result.getContext('2d').drawImage(canvas, clampedX, clampedY, clampedW, clampedH, 0, 0, clampedW, clampedH);
+    return result.toDataURL();
 };
+/**
+ * Show overlay selection on all monitors and capture the selected region.
+ */
 const captureRegionInteractive = async () => {
+    // Create one overlay window per monitor
     return new Promise((resolve, reject) => {
-        let selectionWindow = null;
-        let isSettled = false; // Prevent resolve/reject 2 times
-        const { width, height } = electron_1.screen.getPrimaryDisplay().workAreaSize;
-        /**
-         * Create overlay for selection area
-         */
-        selectionWindow = new electron_1.BrowserWindow({
-            width,
-            height,
-            transparent: true,
-            frame: false,
-            alwaysOnTop: true,
-            skipTaskbar: true,
-            resizable: false,
-            show: false,
-            focusable: true,
-            acceptFirstMouse: true,
-            webPreferences: {
-                nodeIntegration: true,
-                contextIsolation: false,
-            },
+        const overlayWindows = new Map();
+        let isSettled = false;
+        const displays = electron_1.screen.getAllDisplays();
+        const minX = Math.min(...displays.map((d) => d.bounds.x));
+        const minY = Math.min(...displays.map((d) => d.bounds.y));
+        // Store original positions (relative to top-left of all displays)
+        const originalPositions = new Map();
+        displays.forEach((d) => {
+            originalPositions.set(d.id, {
+                x: d.bounds.x - minX,
+                y: d.bounds.y - minY,
+            });
         });
-        /**
-         * Handle cancel selection area
-         */
-        const onCancel = () => {
+        const handleCancel = () => {
             if (isSettled)
                 return;
             isSettled = true;
-            onCleanup();
+            cleanup();
             reject(new Error('User canceled selection'));
         };
-        /**
-         * Handle capture selection area
-         */
-        const onCapture = async (_event, { x, y, width, height }) => {
+        const handleCapture = async (_event, payload) => {
             if (isSettled)
                 return;
             isSettled = true;
-            onCleanup();
-            if (width < 5 || height < 5) {
-                reject(new Error('Selection area is too small'));
+            cleanup();
+            // Convert local coords (relative to this display within composed canvas) to absolute coords
+            const origPos = originalPositions.get(Number(payload.selectionScreenId));
+            if (!origPos) {
+                reject(new Error(`Unknown selection screen: ${payload.selectionScreenId}`));
                 return;
             }
+            const absX = origPos.x + payload.localX;
+            const absY = origPos.y + payload.localY;
             try {
-                const imageBase64 = await captureRegionByCoord(x, y, width, height);
+                const imageBase64 = await composeScreens(absX, absY, payload.localWidth, payload.localHeight);
                 resolve(imageBase64);
             }
             catch (err) {
                 reject(err);
             }
         };
-        /**
-         * Cleanup all resources: remove listeners + close window
-         */
-        const onCleanup = () => {
-            electron_1.ipcMain.removeListener('cancel-selection', onCancel);
-            electron_1.ipcMain.removeListener('capture-selection', onCapture);
-            if (selectionWindow && !selectionWindow.isDestroyed()) {
-                selectionWindow.close();
+        const cleanup = () => {
+            electron_1.ipcMain.off('capture-selection', handleCapture);
+            electron_1.ipcMain.off('cancel-selection', handleCancel);
+            for (const [, win] of overlayWindows) {
+                if (!win.isDestroyed())
+                    win.close();
             }
+            overlayWindows.clear();
         };
-        /**
-         * Load selection overlay HTML
-         */
-        const overlayPath = (0, getResourcePath_1.getResourceElectronPath)('screenshot', '/selectionOverlay.html');
-        selectionWindow.loadFile(overlayPath);
-        selectionWindow.once('ready-to-show', () => {
-            selectionWindow?.show();
-            selectionWindow?.focus();
-        });
-        selectionWindow?.once('closed', () => {
-            if (!isSettled) {
-                isSettled = true;
-                onCleanup();
-                reject(new Error('Selection window closed unexpectedly'));
-            }
-        });
-        /**
-         * Handle cancel selection area
-         */
-        electron_1.ipcMain.once('capture-selection', onCapture);
-        /**
-         * Handle selection area
-         */
-        electron_1.ipcMain.once('cancel-selection', onCancel);
+        // Create one overlay window per monitor
+        for (const display of displays) {
+            const { id, bounds } = display;
+            const origPos = originalPositions.get(id);
+            const overlayWin = new electron_1.BrowserWindow({
+                x: origPos.x,
+                y: origPos.y,
+                width: bounds.width,
+                height: bounds.height,
+                transparent: true,
+                frame: false,
+                alwaysOnTop: true,
+                skipTaskbar: true,
+                resizable: false,
+                show: false,
+                focusable: true,
+                acceptFirstMouse: true,
+                webPreferences: {
+                    nodeIntegration: true,
+                    contextIsolation: false,
+                },
+            });
+            const overlayPath = (0, getResourcePath_1.getResourceElectronPath)('screenshot', '/selectionOverlay.html');
+            const screenUrl = new URL(`?screenId=${id}`, (0, url_1.pathToFileURL)(overlayPath));
+            overlayWin.loadURL(screenUrl.toString());
+            overlayWin.once('ready-to-show', () => {
+                overlayWin?.show();
+                overlayWin?.focus();
+            });
+            overlayWin?.once('closed', () => {
+                if (!isSettled) {
+                    isSettled = true;
+                    cleanup();
+                    reject(new Error('Selection window closed unexpectedly'));
+                }
+            });
+            overlayWindows.set(id, overlayWin);
+        }
+        electron_1.ipcMain.on('capture-selection', handleCapture);
+        electron_1.ipcMain.on('cancel-selection', handleCancel);
     });
 };
 exports.captureRegionInteractive = captureRegionInteractive;

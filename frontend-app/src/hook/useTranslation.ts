@@ -156,6 +156,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
                 response = await dispatch(AITranslateThunk({ ...getAIProviderParams(), ...buildBaseParams(), text: sourceText, })).unwrap();
             }
             setResultText(response.translated_text);
+            await window.electronAPI.showTranslatedText('Translation Completed', response.translated_text || '');
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
         } finally {
@@ -211,6 +212,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
                 throw new Error(ocrResult?.message || "Failed to process translation.");
             }
             setResultText(ocrResult.data.translated_text || '');
+            await window.electronAPI.showTranslatedText('Translation Completed', ocrResult.data.translated_text || '');
 
             message.success('Translation successful!');
         } catch (err: any) {

@@ -48,29 +48,53 @@ ElecTranslator
 │  │  └─ logo.png
 │  ├─ dist
 │  │  ├─ assets
-│  │  │  ├─ button-CNRPjJaL.js
-│  │  │  ├─ check-session-5E_iGCuF.js
+│  │  │  ├─ button-BJX9Xykt.js
 │  │  │  ├─ check-session-CF9k1ngw.css
-│  │  │  ├─ CheckingPage-BO_kDgYn.js
+│  │  │  ├─ check-session-j3IC67XP.js
+│  │  │  ├─ CheckingPage-BJVb8p_N.js
 │  │  │  ├─ CheckingPage-CKKcR3aS.css
-│  │  │  ├─ ExceptionPage-CQFPhXge.js
+│  │  │  ├─ ExceptionPage-D88AtueW.js
 │  │  │  ├─ ExceptionPage-DZ7g0v-k.css
 │  │  │  ├─ index-B5BXDqMa.css
-│  │  │  ├─ index-BYnr_Bpz.js
+│  │  │  ├─ index-Dtb6ncai.js
 │  │  │  ├─ logo-Bt3hN40y.png
-│  │  │  ├─ row-D5DCeyLK.js
-│  │  │  ├─ TranslatePage-BUMuCbuO.js
-│  │  │  └─ typography-DYC3FpkZ.js
+│  │  │  ├─ message-DnDMomZ3.js
+│  │  │  ├─ Overlay-DE5xVQvQ.js
+│  │  │  ├─ row-CosMCbAK.js
+│  │  │  ├─ tag-CJ944MC2.js
+│  │  │  ├─ TranslatePage-BdYTgAt-.js
+│  │  │  └─ typography-VHMC56hC.js
 │  │  ├─ favicon.svg
 │  │  ├─ icons.svg
-│  │  └─ index.html
+│  │  ├─ index.html
+│  │  └─ overlay
+│  │     ├─ assets
+│  │     │  ├─ button-BJX9Xykt.js
+│  │     │  ├─ check-session-CF9k1ngw.css
+│  │     │  ├─ check-session-j3IC67XP.js
+│  │     │  ├─ CheckingPage-BJVb8p_N.js
+│  │     │  ├─ CheckingPage-CKKcR3aS.css
+│  │     │  ├─ ExceptionPage-D88AtueW.js
+│  │     │  ├─ ExceptionPage-DZ7g0v-k.css
+│  │     │  ├─ index-B5BXDqMa.css
+│  │     │  ├─ index-Dtb6ncai.js
+│  │     │  ├─ logo-Bt3hN40y.png
+│  │     │  ├─ message-DnDMomZ3.js
+│  │     │  ├─ Overlay-DE5xVQvQ.js
+│  │     │  ├─ row-CosMCbAK.js
+│  │     │  ├─ tag-CJ944MC2.js
+│  │     │  ├─ TranslatePage-BdYTgAt-.js
+│  │     │  └─ typography-VHMC56hC.js
+│  │     ├─ favicon.svg
+│  │     ├─ icons.svg
+│  │     └─ index.html
 │  ├─ dist-electron
 │  │  ├─ main.js
 │  │  ├─ module
 │  │  │  ├─ checking
 │  │  │  │  ├─ serviceCheck.js
 │  │  │  │  └─ serviceStartup.js
-│  │  │  ├─ orc
+│  │  │  ├─ ocr
 │  │  │  │  └─ ocrRead.js
 │  │  │  ├─ screenshot
 │  │  │  │  └─ screenshot.js
@@ -80,8 +104,7 @@ ElecTranslator
 │  │  ├─ type
 │  │  │  └─ store.type.js
 │  │  └─ utils
-│  │     ├─ getResourcePath.js
-│  │     └─ parseRequirement.js
+│  │     └─ getResourcePath.js
 │  ├─ electron
 │  │  ├─ main.ts
 │  │  ├─ module
@@ -156,6 +179,7 @@ ElecTranslator
 │  │  │  ├─ ExceptionPage.tsx
 │  │  │  ├─ layout
 │  │  │  │  └─ MainLayout.tsx
+│  │  │  ├─ Overlay.tsx
 │  │  │  └─ TranslatePage.tsx
 │  │  ├─ redux
 │  │  │  ├─ features

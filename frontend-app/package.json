@@ -5,8 +5,9 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "build:electron": "tsc -p electron/tsconfig.json",
+    "build:overlay": "vite build --outDir dist/overlay --base ./",
     "build:frontend": "vite build",
-    "build": "pnpm build:electron && pnpm build:frontend",
+    "build": "pnpm build:electron && pnpm build:frontend && pnpm build:overlay",
     "dist": "pnpm build && electron-builder",
     "clean": "rimraf release dist",
     "dev": "concurrently --kill-others \"vite\" \"npm run electron:dev\"",
@@ -29,13 +30,18 @@
           "!**/__pycache__",
           "!**/*.pyc"
         ]
+      },
+      {
+        "from": "assets/**/*",
+        "to": "assets"
       }
     ],
+    "win": {
+      "icon": "assets/logo.png",
+      "target": "nsis"
+    },
     "directories": {
       "output": "release"
-    },
-    "win": {
-      "target": "nsis"
     },
     "mac": {
       "target": "dmg"
@@ -64,6 +70,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
+    "@types/node-notifier": "^8.0.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
