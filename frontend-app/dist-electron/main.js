@@ -19,6 +19,10 @@ const serviceCheck_1 = require("./module/checking/serviceCheck");
 const serviceStartup_1 = require("./module/checking/serviceStartup");
 const store_1 = __importDefault(require("./module/store/store"));
 /**
+ * Set app user model ID
+ */
+electron_1.app.setAppUserModelId('com.electranslator.app');
+/**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
@@ -133,11 +137,107 @@ electron_1.ipcMain.handle('capture-screen', async () => {
         return { error: error.message };
     }
 });
+/**
+ * Show translated text notification
+ */
+let overlayWindow = null;
+let overlayReady = false;
+let overlayHideTimer = null;
+/**
+ * Copy text
+ */
+electron_1.ipcMain.handle('copy-text', (_event, text) => {
+    electron_1.clipboard.writeText(text || '');
+    return true;
+});
+/**
+ * Hide overlay
+ */
+electron_1.ipcMain.handle('hide-overlay', () => {
+    overlayWindow?.hide();
+    return true;
+});
+function createOverlayWindow() {
+    overlayReady = false;
+    overlayWindow = new electron_1.BrowserWindow({
+        width: 520,
+        height: 320,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        focusable: true,
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        resizable: false,
+        show: false,
+        webPreferences: {
+            preload: path_1.default.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+    if (isDev) {
+        overlayWindow.loadURL('http://localhost:5173/overlay');
+    }
+    else {
+        overlayWindow.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
+    }
+}
+/**
+ * Show translated text overlay
+ */
+electron_1.ipcMain.handle('show-translated-text', async (_event, title, body) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) {
+        createOverlayWindow();
+    }
+    const win = overlayWindow;
+    /**
+     * Wait for overlay to be ready
+     */
+    if (!overlayReady) {
+        await new Promise((resolve) => {
+            const timeout = setTimeout(() => {
+                resolve();
+            }, 3000);
+            win.webContents.once('did-finish-load', () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+        });
+    }
+    const display = electron_1.screen.getPrimaryDisplay();
+    const { workArea } = display;
+    /**
+     * Set overlay position
+     */
+    win.setPosition(workArea.x + workArea.width - 540, workArea.y + 80);
+    /**
+     * Send translated text to overlay
+     */
+    win.webContents.send('display-overlay-translation', {
+        title,
+        body,
+    });
+    /**
+     * Show overlay inactive avoid focus stealing
+     */
+    win.showInactive();
+    if (overlayHideTimer) {
+        clearTimeout(overlayHideTimer);
+    }
+    overlayHideTimer = setTimeout(() => {
+        if (!win.isDestroyed()) {
+            win.hide();
+        }
+    }, 10000);
+    return true;
+});
 function createWindow() {
     const win = new electron_1.BrowserWindow({
         width: 1200,
         height: 800,
-        icon: path_1.default.join(__dirname, "../assets/logo.png"),
+        icon: electron_1.app.isPackaged ? path_1.default.join(process.resourcesPath, "assets", "logo.ico") : path_1.default.join(path_1.default.resolve(__dirname, ".."), "assets", "logo.png"),
         webPreferences: {
             preload: path_1.default.join(__dirname, "preload.js"),
             contextIsolation: true,
@@ -172,6 +272,7 @@ electron_1.app.whenReady().then(async () => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
     }
     createWindow();
+    createOverlayWindow();
     (0, serviceStartup_1.setupBackendCleanup)();
 });
 electron_1.app.on("window-all-closed", () => {

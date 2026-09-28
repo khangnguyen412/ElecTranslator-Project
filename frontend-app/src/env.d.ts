@@ -34,5 +34,13 @@ interface Window {
             addHistory: (record: StoreType['history'][0]) => Promise<boolean>
             clearHistory: () => Promise<boolean>
         }
+
+        /**
+         * Overlay translation
+         */
+        showTranslatedText: (title: string, body: string) => Promise<boolean>;
+        onDisplayOverlay: (callback: (data: { title: string; body: string }) => void) => void;
+        hideOverlay: () => Promise<boolean>;
+        copyText: (text: string) => Promise<boolean>;
     }
 }

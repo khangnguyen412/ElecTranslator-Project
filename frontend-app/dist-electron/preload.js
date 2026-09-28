@@ -32,5 +32,15 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
         getHistory: () => electron_1.ipcRenderer.invoke('store:get-history'),
         addHistory: (record) => electron_1.ipcRenderer.invoke('store:add-history', record),
         clearHistory: () => electron_1.ipcRenderer.invoke('store:clear-history'),
-    }
+    },
+    /**
+     * Overlay translation
+     */
+    showTranslatedText: (title, body) => electron_1.ipcRenderer.invoke('show-translated-text', title, body),
+    onDisplayOverlay: (callback) => {
+        electron_1.ipcRenderer.removeAllListeners('display-overlay-translation');
+        electron_1.ipcRenderer.on('display-overlay-translation', (_event, data) => callback(data));
+    },
+    hideOverlay: () => electron_1.ipcRenderer.invoke('hide-overlay'),
+    copyText: (text) => electron_1.ipcRenderer.invoke('copy-text', text),
 });

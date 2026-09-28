@@ -30,6 +30,9 @@
     <div id="selection"></div>
     <script>
         const { ipcRenderer } = require('electron');
+        const params = new URLSearchParams(window.location.search);
+        const selectionScreenId = params.get('screenId');
+
         let startX, startY, isSelecting = false;
         const selectionDiv = document.getElementById('selection');
 
@@ -86,7 +89,13 @@
             const y = Math.min(startY, e.clientY);
             const width = Math.abs(e.clientX - startX);
             const height = Math.abs(e.clientY - startY);
-            ipcRenderer.send('capture-selection', { x, y, width, height });
+            ipcRenderer.send('capture-selection', { 
+                selectionScreenId, 
+                localX: x, 
+                localY: y, 
+                localWidth: width, 
+                localHeight: height 
+            });
         });
     </script>
 </body>

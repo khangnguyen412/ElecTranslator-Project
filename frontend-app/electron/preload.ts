@@ -35,6 +35,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getHistory: () => ipcRenderer.invoke('store:get-history'),
         addHistory: (record: StoreType['data']['history'][0]) => ipcRenderer.invoke('store:add-history', record),
         clearHistory: () => ipcRenderer.invoke('store:clear-history'),
-    }
+    },
 
+    /**
+     * Overlay translation
+     */
+    showTranslatedText: (title: string, body: string) =>
+        ipcRenderer.invoke('show-translated-text', title, body),
+    onDisplayOverlay: (callback: (data: { title: string; body: string }) => void) => {
+        ipcRenderer.removeAllListeners('display-overlay-translation');
+        ipcRenderer.on('display-overlay-translation', (_event, data) => callback(data));
+    },
+    hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
+    copyText: (text: string) => ipcRenderer.invoke('copy-text', text),
 })

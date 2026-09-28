@@ -60,6 +60,9 @@ importers:
       '@types/node':
         specifier: ^24.12.3
         version: 24.12.4
+      '@types/node-notifier':
+        specifier: ^8.0.5
+        version: 8.0.5
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -1088,6 +1091,9 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+
+  '@types/node-notifier@8.0.5':
+    resolution: {integrity: sha512-LX7+8MtTsv6szumAp6WOy87nqMEdGhhry/Qfprjm1Ma6REjVzeF7SCyvPtp5RaF6IkXCS9V4ra8g5fwvf2ZAYg==}
 
   '@types/node@24.12.4':
     resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
@@ -4060,6 +4066,10 @@ snapshots:
       '@types/node': 24.12.4
 
   '@types/ms@2.1.0': {}
+
+  '@types/node-notifier@8.0.5':
+    dependencies:
+      '@types/node': 24.12.4
 
   '@types/node@24.12.4':
     dependencies:
