@@ -40,9 +40,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /**
      * Overlay translation
      */
-    showTranslatedText: (title: string, body: string) =>
+    showTranslatedText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) =>
         ipcRenderer.invoke('show-translated-text', title, body),
-    onDisplayOverlay: (callback: (data: { title: string; body: string }) => void) => {
+    onDisplayOverlay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }> | undefined }) => void) => {
         ipcRenderer.removeAllListeners('display-overlay-translation');
         ipcRenderer.on('display-overlay-translation', (_event, data) => callback(data));
     },

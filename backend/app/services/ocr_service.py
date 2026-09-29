@@ -8,10 +8,10 @@ from contextlib import redirect_stdout, redirect_stderr
 from paddleocr import PaddleOCR
 
 # --- Types ---
-from app.schema import OCRServiceRequest, OCRResponse, ErrorResponse
+from app.schema import OCRRequest, OCRResponse, ErrorResponse
 
 # --- Exceptions ---
-from app.exceptions import AppException, ServiceConnectionError
+from app.exceptions import AppException
 
 # --- Service ---
 
@@ -144,7 +144,7 @@ class PaddleOCRService:
         return cls._ocr_engine
 
     @staticmethod
-    async def get_ocr(request: OCRServiceRequest) -> OCRResponse | ErrorResponse:
+    async def get_ocr(request: OCRRequest) -> OCRResponse | ErrorResponse:
         """
         Main async service function to perform OCR.
         ### Args:
@@ -161,6 +161,13 @@ class PaddleOCRService:
             if img is None:
                 return {"success": False, "error": "Failed to decode image or image not found"}
 
+            # Add a solid white border around the cropped image.
+            # Notes:
+            # - Content is NOT resized or stretched; only the canvas grows from (W x H) to (W + 2*margin, H + 2*margin).
+            # - White (255) is chosen because OCR expects dark text on a light page.
+            # - 32px is a safe default; 16-24px also works if you want less overhead.
+            img = cv2.copyMakeBorder(img, 32, 32, 32, 32, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+
             # Debug: save preprocessed image
             # cv2.imwrite("debug_preprocessed.png", img)
 
@@ -169,7 +176,7 @@ class PaddleOCRService:
 
             # Parse Results
             texts = PaddleOCRService._parse_result(result)
-            return OCRResponse(text=" ".join(texts))
+            return OCRResponse(source_text=" ".join(texts))
 
         except Exception as e:
             raise AppException(status_code=500, error_code="EXCEPTION", message="OCR failed", error=str(e))

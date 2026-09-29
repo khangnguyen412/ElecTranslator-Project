@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { app, BrowserWindow, ipcMain, globalShortcut, clipboard, screen, } from 'electron'; 
+import { app, BrowserWindow, ipcMain, globalShortcut, clipboard, screen, } from 'electron';
 import path from "path";
 
 /**
@@ -16,10 +16,93 @@ import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/che
 import { startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
+let overlayWindow: BrowserWindow | null = null;
+let overlayLoading = false;
+let overlayLoadResolve: (() => void) | null = null;
+let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * Set app user model ID
+ * Create overlay window
  */
-app.setAppUserModelId('com.electranslator.app');
+function createOverlayWindow() {
+    overlayLoading = false;
+
+    overlayWindow = new BrowserWindow({
+        width: 520,
+        height: 420,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        focusable: true,
+
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        resizable: false,
+        show: false,
+
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+
+    if (isDev) {
+        overlayWindow.loadURL('http://localhost:5173/overlay');
+        // overlayWindow.webContents.openDevTools()
+    } else {
+        overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    }
+
+    overlayWindow.webContents.once('did-finish-load', () => {
+        overlayLoading = false;
+        if (overlayLoadResolve) {
+            overlayLoadResolve();
+            overlayLoadResolve = null;
+        }
+    });
+}
+
+/**
+ * Create main window
+ */
+function createWindow() {
+    const win = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        icon: app.isPackaged ? path.join(process.resourcesPath, "assets", "logo.ico") : path.join(path.resolve(__dirname, ".."), "assets", "logo.png"),
+        webPreferences: {
+            preload: path.join(__dirname, "preload.js"),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+
+    /**
+     * Register shortcut to trigger screenshot translate
+     */
+    const shortcut = 'Ctrl+Shift+Space';
+    globalShortcut.register(shortcut, () => {
+        win.webContents.send('trigger-translate');
+    });
+
+    win.once('ready-to-show', () => {
+        /**
+         * Show window and maximize it but keep title bar
+         */
+        win.maximize()
+        win.show()
+    })
+
+    if (isDev) {
+        win.loadURL("http://localhost:5173");
+        win.webContents.openDevTools();
+    } else {
+        win.loadFile(path.join(__dirname, "../dist/index.html"));
+    }
+}
 
 /**
  * Check if application is running in development mode
@@ -149,13 +232,9 @@ ipcMain.handle('capture-screen', async () => {
 });
 
 /**
- * Show translated text notification
- */
-let overlayWindow: BrowserWindow | null = null;
-let overlayReady = false;
-let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
-/**
- * Copy text
+ * Copy text in overlay
+ * @param text Text to copy
+ * @returns True if copy is successful
  */
 ipcMain.handle('copy-text', (_event, text: string) => {
     clipboard.writeText(text || '');
@@ -170,42 +249,11 @@ ipcMain.handle('hide-overlay', () => {
     return true;
 });
 
-function createOverlayWindow() {
-    overlayReady = false;
-
-    overlayWindow = new BrowserWindow({
-        width: 520,
-        height: 320,
-        frame: false,
-        transparent: true,
-        hasShadow: false,
-        focusable: true,
-
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        resizable: false,
-        show: false,
-
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            nodeIntegration: false,
-        },
-    });
-
-    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
-
-    if (isDev) {
-        overlayWindow.loadURL('http://localhost:5173/overlay');
-    } else {
-        overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-    }
-}
-
 /**
- * Show translated text overlay
+ * Show translated text in overlay window
  */
-ipcMain.handle('show-translated-text', async (_event, title: string, body: string) => {
+ipcMain.handle('show-translated-text', async (_event, title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => {
+    // console.log('[Main] show-translated-text received:', title, body);
     if (!overlayWindow || overlayWindow.isDestroyed()) {
         createOverlayWindow();
     }
@@ -215,16 +263,10 @@ ipcMain.handle('show-translated-text', async (_event, title: string, body: strin
     /**
      * Wait for overlay to be ready
      */
-    if (!overlayReady) {
+    if (overlayLoading) {
         await new Promise<void>((resolve) => {
-            const timeout = setTimeout(() => {
-                resolve();
-            }, 3000);
-
-            win.webContents.once('did-finish-load', () => {
-                clearTimeout(timeout);
-                resolve();
-            });
+            overlayLoadResolve = resolve;
+            setTimeout(() => resolve, 3000);
         });
     }
 
@@ -239,10 +281,7 @@ ipcMain.handle('show-translated-text', async (_event, title: string, body: strin
     /**
      * Send translated text to overlay
      */
-    win.webContents.send('display-overlay-translation', {
-        title,
-        body,
-    });
+    win.webContents.send('display-overlay-translation', { title, body });
 
     /**
      * Show overlay inactive avoid focus stealing
@@ -255,48 +294,17 @@ ipcMain.handle('show-translated-text', async (_event, title: string, body: strin
 
     overlayHideTimer = setTimeout(() => {
         if (!win.isDestroyed()) { win.hide(); }
-    }, 10000);
+    }, 60000);
 
     return true;
 });
 
 
+/**
+ * Set app user model ID
+ */
+app.setAppUserModelId('com.electranslator.app');
 
-function createWindow() {
-    const win = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        icon: app.isPackaged ? path.join(process.resourcesPath, "assets", "logo.ico") : path.join(path.resolve(__dirname, ".."), "assets", "logo.png"),
-        webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
-            contextIsolation: true,
-            nodeIntegration: false,
-        },
-    });
-
-    /**
-     * Register shortcut to trigger screenshot translate
-     */
-    const shortcut = 'Ctrl+Shift+Space';
-    globalShortcut.register(shortcut, () => {
-        win.webContents.send('trigger-translate');
-    });
-
-    win.once('ready-to-show', () => {
-        /**
-         * Show window and maximize it but keep title bar
-         */
-        win.maximize()
-        win.show()
-    })
-
-    if (isDev) {
-        win.loadURL("http://localhost:5173");
-        win.webContents.openDevTools();
-    } else {
-        win.loadFile(path.join(__dirname, "../dist/index.html"));
-    }
-}
 
 app.whenReady().then(async () => {
     if (isDev) {

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 
 /**
  * Ant Design
@@ -38,7 +38,7 @@ const TranslationPage: React.FC = () => {
     } = useTranslationSettings();
     const defaultProvider = providers.find(p => p.id === defaultProviderId);
     const modelOptions = (defaultProvider?.model || []).map(m => ({ label: m, value: m, }));
-    const translation = useTranslation({providers, defaultProviderId, modelOptions})
+    const translation = useTranslation({ providers, defaultProviderId, modelOptions })
 
     /**
      * Handle load settings
@@ -54,7 +54,7 @@ const TranslationPage: React.FC = () => {
         if (defaultProvider?.model?.length) {
             translation.setModel(defaultProvider.model[0]);
         }
-    }, [defaultProviderId, providers, translation]);
+    }, [defaultProviderId, providers]);
 
     /**
      * Handle Sync source/target lang when settings loaded
@@ -62,7 +62,7 @@ const TranslationPage: React.FC = () => {
     useEffect(() => {
         if (defaultSourceLanguage) translation.setSourceLang(defaultSourceLanguage);
         if (defaultTargetLanguage) translation.setTargetLang(defaultTargetLanguage);
-    }, [defaultSourceLanguage, defaultTargetLanguage, translation]);
+    }, [defaultSourceLanguage, defaultTargetLanguage]);
 
     return (
         <React.Fragment>
@@ -103,17 +103,20 @@ const TranslationPage: React.FC = () => {
                     </Col>
 
                     {/* Option */}
-                    <OptionsPanel
-                        mode={translation.mode}
-                        category={translation.category}
-                        modeConfig={translation.modeConfig}
-                        modelConfig={translation.modelConfig}
-                        sourceConfig={translation.sourceLangConfig}
-                        targetConfig={translation.targetLangConfig}
-                        categoryConfig={translation.categoryConfig}
-                        toneConfig={translation.toneConfig}
-                        onOpenAdvancedSettings={openSettings}>
-                    </OptionsPanel>
+                    <Col span={24} md={{ span: 6, order: 2 }} xs={{ order: 1 }}>
+                        <OptionsPanel
+                            key={`${translation.mode}-${translation.category}`}
+                            mode={translation.mode}
+                            category={translation.category}
+                            modeConfig={translation.modeConfig}
+                            modelConfig={translation.modelConfig}
+                            sourceConfig={translation.sourceLangConfig}
+                            targetConfig={translation.targetLangConfig}
+                            categoryConfig={translation.categoryConfig}
+                            toneConfig={translation.toneConfig}
+                            onOpenAdvancedSettings={openSettings}>
+                        </OptionsPanel>
+                    </Col>
 
                 </Row>
             </Row>

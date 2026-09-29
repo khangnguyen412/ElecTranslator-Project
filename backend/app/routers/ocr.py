@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 
 # --- OCR Types ---
-from app.schema import OCRRequest, OCRServiceRequest, TranslateRequest, AiTranslateRequest 
+from app.schema import OCRRequest
 
 # --- OCR Service ---
-from app.services import PaddleOCRService, TranslationService, AiService 
+from app.services import PaddleOCRService
 
 # --- OCR Router ---
 from app.routers import ApiResponse
@@ -14,35 +14,5 @@ router = APIRouter()
 
 @router.post("")
 async def process_ocr(request: OCRRequest) -> ApiResponse:
-    ocr_request = OCRServiceRequest(
-        base64_text=request.base64_text,
-        ocr_lang=request.ocr_lang,
-    )
-    ocr_result = await PaddleOCRService.get_ocr(ocr_request)
-
-    if request.mode == "Normal":
-        translate_request = TranslateRequest(
-            text=ocr_result.text,
-            source_lang=request.source_lang,
-            source_code=request.source_code,
-            target_lang=request.target_lang,
-            target_code=request.target_code,
-        )
-        translate_result = await TranslationService.translate(translate_request)
-    else:
-        translate_request = AiTranslateRequest(
-            provider=request.provider,
-            model=request.model,
-            url=request.url,
-            api_key=request.api_key,
-            text=ocr_result.text,
-            source_lang=request.source_lang,
-            source_code=request.source_code,
-            target_lang=request.target_lang,
-            target_code=request.target_code,
-            category=request.category,
-            tone=request.tone,
-        )
-        translate_result = await AiService.translate(translate_request)
-
-    return ApiResponse(success=True, message="OCR processed successfully.", data=translate_result)
+    ocr_result = await PaddleOCRService.get_ocr(request)
+    return ApiResponse(success=True, message="OCR processed successfully.", data=ocr_result)

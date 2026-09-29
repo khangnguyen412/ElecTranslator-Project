@@ -18,10 +18,84 @@ const ocrRead_1 = require("./module/ocr/ocrRead");
 const serviceCheck_1 = require("./module/checking/serviceCheck");
 const serviceStartup_1 = require("./module/checking/serviceStartup");
 const store_1 = __importDefault(require("./module/store/store"));
+let overlayWindow = null;
+let overlayLoading = false;
+let overlayLoadResolve = null;
+let overlayHideTimer = null;
 /**
- * Set app user model ID
+ * Create overlay window
  */
-electron_1.app.setAppUserModelId('com.electranslator.app');
+function createOverlayWindow() {
+    overlayLoading = false;
+    overlayWindow = new electron_1.BrowserWindow({
+        width: 520,
+        height: 420,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        focusable: true,
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        resizable: false,
+        show: false,
+        webPreferences: {
+            preload: path_1.default.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+    if (isDev) {
+        overlayWindow.loadURL('http://localhost:5173/overlay');
+        // overlayWindow.webContents.openDevTools()
+    }
+    else {
+        overlayWindow.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
+    }
+    overlayWindow.webContents.once('did-finish-load', () => {
+        overlayLoading = false;
+        if (overlayLoadResolve) {
+            overlayLoadResolve();
+            overlayLoadResolve = null;
+        }
+    });
+}
+/**
+ * Create main window
+ */
+function createWindow() {
+    const win = new electron_1.BrowserWindow({
+        width: 1200,
+        height: 800,
+        icon: electron_1.app.isPackaged ? path_1.default.join(process.resourcesPath, "assets", "logo.ico") : path_1.default.join(path_1.default.resolve(__dirname, ".."), "assets", "logo.png"),
+        webPreferences: {
+            preload: path_1.default.join(__dirname, "preload.js"),
+            contextIsolation: true,
+            nodeIntegration: false,
+        },
+    });
+    /**
+     * Register shortcut to trigger screenshot translate
+     */
+    const shortcut = 'Ctrl+Shift+Space';
+    electron_1.globalShortcut.register(shortcut, () => {
+        win.webContents.send('trigger-translate');
+    });
+    win.once('ready-to-show', () => {
+        /**
+         * Show window and maximize it but keep title bar
+         */
+        win.maximize();
+        win.show();
+    });
+    if (isDev) {
+        win.loadURL("http://localhost:5173");
+        win.webContents.openDevTools();
+    }
+    else {
+        win.loadFile(path_1.default.join(__dirname, "../dist/index.html"));
+    }
+}
 /**
  * Check if application is running in development mode
  */
@@ -138,13 +212,9 @@ electron_1.ipcMain.handle('capture-screen', async () => {
     }
 });
 /**
- * Show translated text notification
- */
-let overlayWindow = null;
-let overlayReady = false;
-let overlayHideTimer = null;
-/**
- * Copy text
+ * Copy text in overlay
+ * @param text Text to copy
+ * @returns True if copy is successful
  */
 electron_1.ipcMain.handle('copy-text', (_event, text) => {
     electron_1.clipboard.writeText(text || '');
@@ -157,37 +227,11 @@ electron_1.ipcMain.handle('hide-overlay', () => {
     overlayWindow?.hide();
     return true;
 });
-function createOverlayWindow() {
-    overlayReady = false;
-    overlayWindow = new electron_1.BrowserWindow({
-        width: 520,
-        height: 320,
-        frame: false,
-        transparent: true,
-        hasShadow: false,
-        focusable: true,
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        resizable: false,
-        show: false,
-        webPreferences: {
-            preload: path_1.default.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            nodeIntegration: false,
-        },
-    });
-    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
-    if (isDev) {
-        overlayWindow.loadURL('http://localhost:5173/overlay');
-    }
-    else {
-        overlayWindow.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
-    }
-}
 /**
- * Show translated text overlay
+ * Show translated text in overlay window
  */
 electron_1.ipcMain.handle('show-translated-text', async (_event, title, body) => {
+    // console.log('[Main] show-translated-text received:', title, body);
     if (!overlayWindow || overlayWindow.isDestroyed()) {
         createOverlayWindow();
     }
@@ -195,15 +239,10 @@ electron_1.ipcMain.handle('show-translated-text', async (_event, title, body) =>
     /**
      * Wait for overlay to be ready
      */
-    if (!overlayReady) {
+    if (overlayLoading) {
         await new Promise((resolve) => {
-            const timeout = setTimeout(() => {
-                resolve();
-            }, 3000);
-            win.webContents.once('did-finish-load', () => {
-                clearTimeout(timeout);
-                resolve();
-            });
+            overlayLoadResolve = resolve;
+            setTimeout(() => resolve, 3000);
         });
     }
     const display = electron_1.screen.getPrimaryDisplay();
@@ -215,10 +254,7 @@ electron_1.ipcMain.handle('show-translated-text', async (_event, title, body) =>
     /**
      * Send translated text to overlay
      */
-    win.webContents.send('display-overlay-translation', {
-        title,
-        body,
-    });
+    win.webContents.send('display-overlay-translation', { title, body });
     /**
      * Show overlay inactive avoid focus stealing
      */
@@ -230,42 +266,13 @@ electron_1.ipcMain.handle('show-translated-text', async (_event, title, body) =>
         if (!win.isDestroyed()) {
             win.hide();
         }
-    }, 10000);
+    }, 60000);
     return true;
 });
-function createWindow() {
-    const win = new electron_1.BrowserWindow({
-        width: 1200,
-        height: 800,
-        icon: electron_1.app.isPackaged ? path_1.default.join(process.resourcesPath, "assets", "logo.ico") : path_1.default.join(path_1.default.resolve(__dirname, ".."), "assets", "logo.png"),
-        webPreferences: {
-            preload: path_1.default.join(__dirname, "preload.js"),
-            contextIsolation: true,
-            nodeIntegration: false,
-        },
-    });
-    /**
-     * Register shortcut to trigger screenshot translate
-     */
-    const shortcut = 'Ctrl+Shift+Space';
-    electron_1.globalShortcut.register(shortcut, () => {
-        win.webContents.send('trigger-translate');
-    });
-    win.once('ready-to-show', () => {
-        /**
-         * Show window and maximize it but keep title bar
-         */
-        win.maximize();
-        win.show();
-    });
-    if (isDev) {
-        win.loadURL("http://localhost:5173");
-        win.webContents.openDevTools();
-    }
-    else {
-        win.loadFile(path_1.default.join(__dirname, "../dist/index.html"));
-    }
-}
+/**
+ * Set app user model ID
+ */
+electron_1.app.setAppUserModelId('com.electranslator.app');
 electron_1.app.whenReady().then(async () => {
     if (isDev) {
         await (0, electron_devtools_installer_1.installExtension)(electron_devtools_installer_1.REACT_DEVELOPER_TOOLS);

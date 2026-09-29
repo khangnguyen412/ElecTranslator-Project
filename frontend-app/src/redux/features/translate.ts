@@ -9,7 +9,7 @@ import { AITranslate, NormalTranslate } from "@/services/TranslateServices";
 /**
  * Type
  */
-import type { PromptParams } from "@/types/translate.type";
+import type { TranslateParams, TranslateResponse } from "@/types/translate.type";
 import type { ErrorType } from "@/types/error.type";
 
 export type TranslateState = {
@@ -18,11 +18,7 @@ export type TranslateState = {
     error?: ErrorType['error'] | null;
 }
 
-export type TranslateResponse = {
-    translated_text: string
-}
-
-export const NormalTranslateThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+export const NormalTranslateThunk = createAsyncThunk<TranslateResponse, TranslateParams, { rejectValue: ErrorType }>(
     'translate/requestNormal',
     async (data, { rejectWithValue }) => {
         try {
@@ -36,7 +32,7 @@ export const NormalTranslateThunk = createAsyncThunk<TranslateResponse, PromptPa
 )
 
 
-export const AITranslateThunk = createAsyncThunk<TranslateResponse, PromptParams, { rejectValue: ErrorType }>(
+export const AITranslateThunk = createAsyncThunk<TranslateResponse, TranslateParams, { rejectValue: ErrorType }>(
     'translate/requestAI',
     async (data, { rejectWithValue }) => {
         try {
