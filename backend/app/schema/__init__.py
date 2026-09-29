@@ -1,4 +1,4 @@
-from .ocr_schema import OCRRequest, OCRServiceRequest, OCRResponse
+from .ocr_schema import OCRRequest, OCRResponse
 from .translate_schema import TranslateRequest, TranslateResponse
 from .ai_schema import AiTranslateRequest, AiTranslateResponse, AiModelResponse, AiStatusResponse
 from .error_schema import ErrorResponse
@@ -6,7 +6,6 @@ from .health_schema import HealthResponse
 
 __all__ = [ 
     "OCRRequest",
-    "OCRServiceRequest",
     "OCRResponse",
     "TranslateRequest",
     "TranslateResponse",

@@ -10,3 +10,4 @@ class TranslateRequest(BaseModel):
 class TranslateResponse(BaseModel):
     source_text: str = Field(default=None, description="Source text.")
     translated_text: str = Field(default=None, description="Translated text.")
+

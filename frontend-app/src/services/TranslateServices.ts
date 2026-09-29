@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { getRequest, postRequest } from '@/api/axios';
+import { postRequest } from '@/api/axios';
 
 /**
  * Type
  */
-import type { PromptParams } from "@/types/translate.type";
+import type { TranslateParams } from "@/types/translate.type";
 
-export const AITranslate = async (payload: PromptParams): Promise<any> => {
+export const AITranslate = async (payload: TranslateParams): Promise<any> => {
     try {
         return await postRequest('/ai/translate', payload, { headers: { 'Content-Type': 'application/json' }, withCredentials: false });
     } catch (error) {
@@ -14,7 +14,7 @@ export const AITranslate = async (payload: PromptParams): Promise<any> => {
     }
 }
 
-export const NormalTranslate = async (payload: PromptParams): Promise<any> => {
+export const NormalTranslate = async (payload: TranslateParams): Promise<any> => {
     try {
         // const url = `https://lingva.ml/api/v1` ;
         // const endpoint = `${payload.sourceLanguage}/${payload.targetLanguage}/${encodeURIComponent(payload.text)}`;

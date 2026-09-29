@@ -7,8 +7,7 @@ export interface Prompt {
     };
 }
 
-export interface PromptParams {
-    mode: string;
+export interface TranslateParams {
     provider?: string | undefined;
     model?: string | undefined;
     url?: string | undefined;
@@ -20,4 +19,8 @@ export interface PromptParams {
     target_code: string; // Code of target language (vi, en, zh, fr, de...)
     category?: 'manga' | 'novel' | 'email' | 'subtitles' | 'technical' | 'default' | string | undefined;
     tone?: 'casual' | 'formal' | 'dramatic' | 'comedic' | 'romantic' | 'default' | undefined;
+}
+
+export interface TranslateResponse {
+    translated_text: string
 }

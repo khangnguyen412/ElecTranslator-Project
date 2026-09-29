@@ -38,8 +38,8 @@ interface Window {
         /**
          * Overlay translation
          */
-        showTranslatedText: (title: string, body: string) => Promise<boolean>;
-        onDisplayOverlay: (callback: (data: { title: string; body: string }) => void) => void;
+        showTranslatedText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => Promise<boolean>;
+        onDisplayOverlay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>; }) => void) => void;
         hideOverlay: () => Promise<boolean>;
         copyText: (text: string) => Promise<boolean>;
     }

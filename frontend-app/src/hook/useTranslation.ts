@@ -30,7 +30,7 @@ import { SOURCE_LANG_OPTIONS, SOURCE_LANG_OPTIONS_AI, TARGET_LANG_OPTIONS, MODE_
  * Type
  */
 import type { OCRRequest, OCRResponse } from '@/types/ocr.type';
-import type { PromptParams } from '@/types/translate.type';
+import type { TranslateParams, TranslateResponse } from '@/types/translate.type';
 
 interface ProviderInfo {
     providers: any[]
@@ -56,14 +56,14 @@ interface UseTranslation {
     sourceLang: string | undefined;
     targetLang: string | undefined;
     category: string | undefined;
-    tone: PromptParams['tone'] | undefined;
+    tone: TranslateParams['tone'] | undefined;
     setSourceText: React.Dispatch<React.SetStateAction<string>>;
     setMode: React.Dispatch<React.SetStateAction<string | undefined>>;
     setModel: React.Dispatch<React.SetStateAction<string | undefined>>;
     setSourceLang: React.Dispatch<React.SetStateAction<string | undefined>>;
     setTargetLang: React.Dispatch<React.SetStateAction<string | undefined>>;
     setCategory: React.Dispatch<React.SetStateAction<string | undefined>>;
-    setTone: React.Dispatch<React.SetStateAction<PromptParams['tone'] | undefined>>;
+    setTone: React.Dispatch<React.SetStateAction<TranslateParams['tone'] | undefined>>;
     handleTranslate: () => void;
     handleTranslateOCR: () => void;
     handleClear: () => void;
@@ -89,7 +89,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
     const [sourceLang, setSourceLang] = useState<string | undefined>(undefined);
     const [targetLang, setTargetLang] = useState<string | undefined>(undefined);
     const [category, setCategory] = useState<string | undefined>('default');
-    const [tone, setTone] = useState<PromptParams['tone'] | undefined>(undefined);
+    const [tone, setTone] = useState<TranslateParams['tone'] | undefined>(undefined);
 
     /**
      * Hook
@@ -127,7 +127,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
     /**
      * Get provider info from params - don't hardcode URL/key in hook
      */
-    const getAIProviderParams = (): Partial<PromptParams> => {
+    const getAIProviderParams = (): Partial<TranslateParams> => {
         const p = providerInfo?.providers.find((item) => item.id === providerInfo?.defaultProviderId);
         return {
             provider: p?.id || 'ollama',
@@ -149,16 +149,27 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             if (!sourceLang || !targetLang || !category) {
                 throw new Error('Please select source language, target language, and category');
             }
-            let response: any;
+            /**
+             * Hide overlay before translate
+             */
+            await window.electronAPI.hideOverlay();
+            let response: TranslateResponse;
             if (mode === 'Normal') {
                 response = await dispatch(NormalTranslateThunk({ ...buildBaseParams(), text: sourceText, })).unwrap();
             } else {
                 response = await dispatch(AITranslateThunk({ ...getAIProviderParams(), ...buildBaseParams(), text: sourceText, })).unwrap();
             }
             setResultText(response.translated_text);
-            await window.electronAPI.showTranslatedText('Translation Completed', response.translated_text || '');
+            await window.electronAPI.showTranslatedText('Translation Completed', [
+                { text: sourceText || '', type: 'source' },
+                { text: response.translated_text || '', type: 'translated' },
+            ]);
+            message.success('Translation successful!');
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
+            await window.electronAPI.showTranslatedText('Translation Failed', [
+                { text: err.message || '', type: 'error' },
+            ]);
         } finally {
             setTranslating(false);
         }
@@ -176,31 +187,28 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             if (!sourceLang || !targetLang || !model) {
                 throw new Error('Please select source language, target language, and model');
             }
+
+            /**
+             * Hide overlay before capture
+             */
+            await window.electronAPI.hideOverlay();
+            
             const result = await window.electronAPI.captureScreen();
             if (result.error) {
                 throw new Error(result.error);
             }
 
             let ocrRequestParams: OCRRequest;
-            if (mode === 'Normal') {
-                ocrRequestParams = {
-                    base64_text: result.base64,
-                    ocr_lang: getOcrCodeByLang(sourceLang || '')?.ocrCode || 'en',
-                    ...buildBaseParams(),
-                }
-            } else {
-                ocrRequestParams = {
-                    base64_text: result.base64,
-                    ocr_lang: getOcrCodeByLang(sourceLang || '')?.ocrCode || 'en',
-                    ...getAIProviderParams(),
-                    ...buildBaseParams(),
-                }
+            ocrRequestParams = {
+                base64_text: result.base64,
+                ocr_lang: getOcrCodeByLang(sourceLang || '')?.ocrCode || 'en',
             }
             const ocrResult: OCRResponse = await dispatch(requestOCRThunk(ocrRequestParams)).unwrap();
+
             /**
              * return source text from ocrResult.text
              */
-            if (!ocrResult?.data?.source_text) {
+            if (!ocrResult?.data?.source_text || ocrResult?.data?.source_text.trim() === '') {
                 throw new Error(ocrResult?.message || "Failed to process OCR.");
             }
             setSourceText(ocrResult.data.source_text || '');
@@ -208,15 +216,27 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             /**
              * return translated text from ocrResult.text
              */
-            if (!ocrResult?.data?.translated_text) {
-                throw new Error(ocrResult?.message || "Failed to process translation.");
+            let response: TranslateResponse;
+            if (mode === 'Normal') {
+                response = await dispatch(NormalTranslateThunk({ ...buildBaseParams(), text: ocrResult.data.source_text })).unwrap();
+            } else {
+                response = await dispatch(AITranslateThunk({ ...getAIProviderParams(), ...buildBaseParams(), text: ocrResult.data.source_text })).unwrap();
             }
-            setResultText(ocrResult.data.translated_text || '');
-            await window.electronAPI.showTranslatedText('Translation Completed', ocrResult.data.translated_text || '');
 
+            if (!response?.translated_text) {
+                throw new Error("Failed to process translation.");
+            }
+            setResultText(response.translated_text);
+            await window.electronAPI.showTranslatedText('Translation Completed', [
+                { text: ocrResult.data.source_text || '', type: 'source' },
+                { text: response.translated_text || '', type: 'translated' },
+            ]);
             message.success('Translation successful!');
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
+            await window.electronAPI.showTranslatedText('Translation Failed', [
+                { text: err.message || '', type: 'error' },
+            ]);
         } finally {
             setTranslatingOCR(false);
             ocrProcessingRef.current = false;
