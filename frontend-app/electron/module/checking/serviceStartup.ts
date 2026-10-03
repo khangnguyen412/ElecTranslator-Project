@@ -210,9 +210,11 @@ export const setupBackendCleanup = () => {
     /**
      * Handle cleanup when app closes
      */
-    app.once('before-quit', async () => {
+    app.once('before-quit', () => {
         console.log('App is closing, stopping backend...');
-        await stopBackend();
+        try { backendProcess?.kill('SIGINT'); } catch (e) {
+            console.error('Error sending SIGINT:', e);
+        }
     });
 
     /**

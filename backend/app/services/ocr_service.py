@@ -11,7 +11,7 @@ from paddleocr import PaddleOCR
 from app.schema import OCRRequest, OCRResponse, ErrorResponse
 
 # --- Exceptions ---
-from app.exceptions import AppException
+from app.exceptions import AppException, NotFoundError
 
 # --- Service ---
 
@@ -176,7 +176,10 @@ class PaddleOCRService:
 
             # Parse Results
             texts = PaddleOCRService._parse_result(result)
-            return OCRResponse(source_text=" ".join(texts))
+            source_text = " ".join(texts)
+            if not source_text:
+                raise NotFoundError("No text detected")
+            return OCRResponse(source_text=source_text)
 
         except Exception as e:
             raise AppException(status_code=500, error_code="EXCEPTION", message="OCR failed", error=str(e))

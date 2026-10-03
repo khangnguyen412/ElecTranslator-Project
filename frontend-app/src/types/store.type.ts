@@ -1,7 +1,7 @@
 export type Setting = {
     provider: Array<{
-        id: 'OpenAI',
-        name: 'OpenAI',
+        id: string,
+        name: string,
         type: 'cloud' | 'local';
         api_key: string,
         base_url: string,

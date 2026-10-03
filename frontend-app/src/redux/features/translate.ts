@@ -39,7 +39,8 @@ export const AITranslateThunk = createAsyncThunk<TranslateResponse, TranslatePar
             const response = await AITranslate(data);
             return response.data;
         } catch (error: any) {
-            const errorData: ErrorType = error?.data || { error: "Translate Failed" };
+            console.error('Thunk error:', error);
+            const errorData: ErrorType = error || { error: "Translate Failed" };
             return rejectWithValue(errorData);
         }
     }

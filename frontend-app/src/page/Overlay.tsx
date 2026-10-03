@@ -40,7 +40,7 @@ const Overlay: React.FC = () => {
                 <Card style={{ background: 'rgba(20, 20, 20, 0.9)', border: '1px solid #444', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }} styles={{ body: { padding: '20px' } }}            >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <Title level={4} style={{ color: isError ? '#ff4d4f' : '#1890ff', margin: 0 }}>
-                            {isError ? 'Lỗi' : 'Kết quả'}: {data.title}
+                            {isError ? 'Error' : 'Result'}: {data.title}
                         </Title>
                         <Button type="text" icon={<CloseOutlined />} onClick={handleClose} style={{ color: '#fff' }} />
                     </div>

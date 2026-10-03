@@ -95,6 +95,11 @@ function createWindow() {
     else {
         win.loadFile(path_1.default.join(__dirname, "../dist/index.html"));
     }
+    win.once('closed', () => {
+        if (overlayWindow && !overlayWindow.isDestroyed()) {
+            overlayWindow.destroy();
+        }
+    });
 }
 /**
  * Check if application is running in development mode
@@ -283,6 +288,9 @@ electron_1.app.whenReady().then(async () => {
     (0, serviceStartup_1.setupBackendCleanup)();
 });
 electron_1.app.on("window-all-closed", () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.destroy();
+    }
     if (process.platform !== "darwin")
         electron_1.app.quit();
 });
