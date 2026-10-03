@@ -14,5 +14,4 @@ router = APIRouter()
 
 @router.post("")
 async def process_ocr(request: OCRRequest) -> ApiResponse:
-    ocr_result = await PaddleOCRService.get_ocr(request)
-    return ApiResponse(success=True, message="OCR processed successfully.", data=ocr_result)
+    return ApiResponse(success=True, message="OCR processed successfully.", data=await PaddleOCRService.get_ocr(request))

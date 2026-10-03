@@ -203,9 +203,14 @@ const setupBackendCleanup = () => {
     /**
      * Handle cleanup when app closes
      */
-    electron_1.app.once('before-quit', async () => {
+    electron_1.app.once('before-quit', () => {
         console.log('App is closing, stopping backend...');
-        await (0, exports.stopBackend)();
+        try {
+            exports.backendProcess?.kill('SIGINT');
+        }
+        catch (e) {
+            console.error('Error sending SIGINT:', e);
+        }
     });
     /**
      * Handle terminate signals

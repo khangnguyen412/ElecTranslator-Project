@@ -13,7 +13,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
 import { captureRegionInteractive } from './module/screenshot/screenshot'
 import { pythonProcesses, ocrRequests, getOCRCreatePythonProcess } from "./module/ocr/ocrRead";
 import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
-import { startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
+import { startBackend, setupBackendCleanup, stopBackend, backendProcess } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
 let overlayWindow: BrowserWindow | null = null;
@@ -102,7 +102,13 @@ function createWindow() {
     } else {
         win.loadFile(path.join(__dirname, "../dist/index.html"));
     }
+    win.once('closed', () => {
+        if (overlayWindow && !overlayWindow.isDestroyed()) {
+            overlayWindow.destroy();
+        }
+    });
 }
+
 
 /**
  * Check if application is running in development mode
@@ -317,6 +323,9 @@ app.whenReady().then(async () => {
 })
 
 app.on("window-all-closed", () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.destroy();
+    }
     if (process.platform !== "darwin") app.quit();
 });
 

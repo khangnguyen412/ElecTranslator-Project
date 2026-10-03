@@ -63,12 +63,12 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                 <Button key="cancel" onClick={onCancel}>Cancel</Button>,
                 <Button key="save" type="primary" onClick={onSave} icon={<SettingOutlined />}>Save Settings</Button>,
             ]}>
-            <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
+            <div className="advanced-settings-modal-scroll">
 
                 {/* ===== GROUP A: Default Language Settings ===== */}
-                <Card title={<span>Default Language Settings</span>} size="small" style={{ marginBottom: 16 }}>
+                <Card title={<span>Default Language Settings</span>} size="small" className="advanced-settings-card">
                     <Row gutter={[16, 12]}>
-                        <Col span={8}>
+                        <Col span={6} lg={6} md={12} xs={24} >
                             <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>OCR Language</Typography.Text>
                             <Select
                                 value={defaultOcrLanguage}
@@ -84,7 +84,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                 ]}
                             />
                         </Col>
-                        <Col span={8}>
+                        <Col span={6} lg={6} md={12} xs={24} >
                             <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>Source Language</Typography.Text>
                             <Select
                                 value={defaultSourceLanguage}
@@ -101,7 +101,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                 ]}
                             />
                         </Col>
-                        <Col span={8}>
+                        <Col span={6} lg={6} md={12} xs={24} >
                             <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>Target Language</Typography.Text>
                             <Select
                                 value={defaultTargetLanguage}
@@ -117,32 +117,32 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                 ]}
                             />
                         </Col>
-                    </Row>
-                </Card>
-
-                <Card title={<span>API Providers</span>} size="small" style={{ marginBottom: 16 }}
-                    extra={
-                        <Space>
-                            <Typography.Text style={{ fontSize: 13 }}>Default:</Typography.Text>
+                        <Col span={6} lg={6} md={12} xs={24} >
+                            <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>Default Provider</Typography.Text>
                             <Select
                                 value={defaultProviderId}
                                 onChange={setDefaultProviderId}
-                                style={{ width: 140 }}
+                                style={{ width: '100%', marginTop: 4 }}
                                 options={providers.map(p => ({ value: p.id, label: p.name }))}
                                 allowClear
                                 placeholder="Select..."
                             />
+                        </Col>
+                    </Row>
+                </Card>
+
+                <Card title={<span>API Providers</span>} size="small" className="advanced-settings-card"
+                    extra={
+                        <Space>
+                            <Typography.Text style={{ fontSize: 13 }}>Default:</Typography.Text>
                         </Space>
                     }>
-                    <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                    <div className="advanced-settings-provider-list">
                         {providers.map((provider, index) => (
                             <Card
                                 key={provider.id}
                                 size="small"
-                                style={{
-                                    marginBottom: 8,
-                                    borderLeft: `3px solid ${provider.type === 'local' ? '#52c41a' : '#1677ff'}`
-                                }}
+                                className={`advanced-settings-provider-card ${provider.type === 'local' ? 'advanced-settings-provider-card--local' : 'advanced-settings-provider-card--cloud'}`}
                                 title={
                                     <Space>
                                         {provider.type === 'local' ? <LaptopOutlined style={{ color: '#52c41a' }} /> : <CloudOutlined style={{ color: '#1677ff' }} />}
@@ -163,7 +163,8 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                             }}
                                             style={{ marginTop: 2 }}
                                             prefix={<LinkOutlined />}
-                                            placeholder={provider.type === 'local' ? 'http://localhost:11434/v1/chat/completions' : 'https://api.openai.com/v1'}
+                                            disabled={provider?.id === 'Google'}
+                                            placeholder={provider?.id === 'Google' ? 'Auto' : provider?.type === 'local' ? 'http://localhost:11434/v1/chat/completions' : 'https://api.openai.com/v1'}
                                         />
                                     </Col>
                                     <Col span={12}>
@@ -183,7 +184,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                     </Col>
                                     <Col span={24}>
                                         <Typography.Text style={{ fontSize: 12, color: '#888' }}>Models</Typography.Text>
-                                        <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                                        <div className="advanced-settings-model-tags">
                                             {(provider.model || []).map((m: string, mi: number) => (
                                                 <Tag key={m} color="purple" style={{ fontSize: 11 }} closable
                                                     onClose={() => {
@@ -194,7 +195,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                                             ))}
                                             <Input
                                                 size="small"
-                                                style={{ width: 160 }}
+                                                className="advanced-settings-model-input"
                                                 placeholder="Model name..."
                                                 value={newModelInput[provider.id] || ''}
                                                 onChange={(e) =>

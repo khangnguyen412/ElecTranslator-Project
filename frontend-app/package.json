@@ -57,15 +57,14 @@
     "antd": "^6.4.0",
     "axios": "^1.16.1",
     "canvas": "^3.2.3",
+    "change-case": "^5.4.4",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.3.9",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-redux": "^9.3.0",
     "react-router-dom": "^6.30.3",
-    "screenshot-desktop": "^1.15.4",
-    "sharp": "^0.34.5",
-    "tesseract.js": "^7.0.0"
+    "screenshot-desktop": "^1.15.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

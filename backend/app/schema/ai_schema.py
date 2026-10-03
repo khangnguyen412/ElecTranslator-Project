@@ -18,11 +18,3 @@ class AiTranslateRequest(BaseModel):
 class AiTranslateResponse(BaseModel):
     source_text: str = Field(default=None, description="Source text.")
     translated_text: str = Field(default=None, description="Translated text.")
-
-
-class AiStatusResponse(BaseModel):
-    status: str = Field(default=None, description="The status of the server.")
-
-
-class AiModelResponse(BaseModel):
-    model: list = Field(default={"name": str, "model": str}, description="The list of models.")

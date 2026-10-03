@@ -15,11 +15,6 @@ import { requestOCRThunk } from '@/redux/features/ocr';
 import { AITranslateThunk, NormalTranslateThunk } from '@/redux/features/translate';
 import type { AppDispatch } from '@/redux/store';
 
-
-/**
- * Service
- */
-
 /**
  * Config
  */
@@ -167,6 +162,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             message.success('Translation successful!');
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
+            console.error(err);
             await window.electronAPI.showTranslatedText('Translation Failed', [
                 { text: err.message || '', type: 'error' },
             ]);
