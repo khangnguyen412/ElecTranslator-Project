@@ -8,6 +8,7 @@ const LoadingPage = lazy(() => import('@/page/CheckingPage'));
 const TranslationPage = lazy(() => import('@/page/TranslatePage'));
 const ExceptionPage = lazy(() => import('@/page/ExceptionPage'));
 const OverlayTranslationPage = lazy(() => import('@/page/Overlay'));
+const MainLayout = lazy(() => import('@/page/layout/MainLayout'));
 
 export const routes: RouteObject[] = [
     {
@@ -39,7 +40,9 @@ export const routes: RouteObject[] = [
         path: '/',
         element: (
             <Suspense>
-                <TranslationPage />
+                <MainLayout>
+                    <TranslationPage />
+                </MainLayout>
             </Suspense>
         ),
     },

@@ -1,0 +1,94 @@
+
+// =============================================
+// MainLayout Styles (extracted from MainLayout.tsx inline styles)
+// =============================================
+
+.main-layout {
+    min-height: 100vh;
+
+    .main-header {
+        padding-inline: 24px;
+    }
+
+    .main-header-row {
+        height: 100%;
+    }
+
+    .logo-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: #fff;
+        display: grid;
+        place-items: center;
+    }
+
+    .logo-img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .app-title {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .main-header-actions {
+        line-height: 1;
+    }
+
+    .main-content {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .main-footer {
+        text-align: center;
+    }
+
+    .footer-highlight {
+        color: #1677ff;
+    }
+}
+
+// ── AdvancedSettingsModal (AdvancedSettingsModal.tsx) ─────
+
+.advanced-settings-modal-scroll {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.advanced-settings-card {
+    margin-bottom: 16px;
+}
+
+.advanced-settings-provider-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.advanced-settings-provider-card {
+    margin-bottom: 8px;
+
+    &--local {
+        border-left: 3px solid rgb(82, 196, 26);
+    }
+
+    &--cloud {
+        border-left: 3px solid rgb(22, 119, 255);
+    }
+}
+
+.advanced-settings-model-tags {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.advanced-settings-model-input {
+    width: 160px;
+}

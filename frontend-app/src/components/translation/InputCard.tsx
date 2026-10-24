@@ -3,8 +3,8 @@ import React from 'react';
 /**
  * Ant Design
  */
-import { Input, Button, Typography, Space, Col, Row } from 'antd';
-import { CopyOutlined, CameraOutlined, TranslationOutlined } from '@ant-design/icons';
+import { Input, Button, Typography, Space, Col, Card, Tag, } from 'antd';
+import { CopyOutlined, CameraOutlined, TranslationOutlined, DeleteOutlined } from '@ant-design/icons';
 
 
 
@@ -28,26 +28,27 @@ export const InputCard: React.FC<InputCardProps> = (props: InputCardProps) => {
 
     return (
         <React.Fragment>
-            <Col span={24} className="input-card">
+            <Col span={24} >
                 {/* Input OCR */}
-                <Typography.Text strong className="input-card__title">Input Text - {sourceLangName}</Typography.Text>
-                <Input.TextArea rows={8} value={sourceText} onChange={(e) => onSourceTextChange(e.target.value)} placeholder="Captured text will appear here..." className="input-card__textarea" />
-                <Row justify="start" align="middle" className="input-card__actions-row">
-                    <Space wrap={true}>
-                        <Button icon={<CopyOutlined />} onClick={() => onCopy()} disabled={!sourceText}>
-                            Copy
-                        </Button>
-                        <Button onClick={() => onClear()} disabled={!sourceText}>
-                            Clear
-                        </Button>
-                        <Button htmlType="button" icon={<TranslationOutlined />} onClick={() => onTranslate()} loading={translating} disabled={translatingOCR}>
-                            Translate
-                        </Button>
-                        <Button htmlType="button" icon={<CameraOutlined />} onClick={() => onCapture()} loading={translatingOCR} disabled={translating}>
-                            Capture
-                        </Button>
+                <Card title="Input Text" extra={<Tag color="blue">{sourceLangName}</Tag>} >
+                    <Input.TextArea rows={8} value={sourceText} onChange={(e) => onSourceTextChange(e.target.value)} placeholder="Captured text will appear here..." className="result-card__textarea" />
+                    <Typography.Text type="secondary" className="input-card__char-count">
+                        {sourceText.length} Characters
+                    </Typography.Text>
+
+                    <Space wrap className="input-card__actions">
+                        <Space wrap>
+                            <Button icon={<CopyOutlined />} onClick={onCopy} disabled={!sourceText}>Copy</Button>
+                            <Button danger icon={<DeleteOutlined />} onClick={onClear} disabled={!sourceText}>Clear</Button>
+                        </Space>
+                        <Space wrap>
+                            <Typography.Text type="secondary" className="input-card__hotkey"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> To Capture</Typography.Text>
+                            <Button icon={<CameraOutlined />} onClick={onCapture} loading={translatingOCR} disabled={translating}>Capture</Button>
+                            <Button type="primary" icon={<TranslationOutlined />} onClick={onTranslate} loading={translating} disabled={translatingOCR}>Translate</Button>
+                        </Space>
                     </Space>
-                </Row>
+
+                </Card>
             </Col>
         </React.Fragment>
     )

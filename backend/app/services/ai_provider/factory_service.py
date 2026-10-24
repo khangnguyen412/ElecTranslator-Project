@@ -3,6 +3,7 @@ from .openai_ai_service import OpenAIService
 from .anthropic_ai_service import AnthropicService
 from .google_ai_service import GoogleService
 from .ninerouter_ai_service import NineRouterService
+from .ollama_ai_service import OllamaService
 
 class AIServiceFactory:
     @staticmethod
@@ -22,8 +23,8 @@ class AIServiceFactory:
             return GoogleService()
             
         # Group 4: Ollama Local
-        # elif provider in ["ollama", "local"]:
-        #     return OllamaService()
+        elif provider in ["ollama", "local"]:
+            return OllamaService()
 
         elif provider in ["9router", "9route"]:
             return NineRouterService()
