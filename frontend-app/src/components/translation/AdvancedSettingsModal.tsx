@@ -9,7 +9,7 @@ import React, { useState } from 'react';
  * Ant Design
  */
 import { Modal, Button, Input, Select, Card, Row, Col, Typography, Space, Tag } from 'antd';
-import { SettingOutlined, PlusOutlined, KeyOutlined, LinkOutlined, CloudOutlined, LaptopOutlined } from '@ant-design/icons';
+import { PlusOutlined, KeyOutlined, LinkOutlined, CloudOutlined, LaptopOutlined, CloseOutlined } from '@ant-design/icons';
 
 /**
  * Type
@@ -58,10 +58,10 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
     const [newModelInput, setNewModelInput] = useState<Record<string, string>>({});
 
     return (
-        <Modal title="Advanced Translation Settings" open={open} onCancel={onCancel} width={1200}
+        <Modal title="Advanced Translation Settings" open={open} onCancel={onCancel} width={1200} closeIcon={<CloseOutlined />}
             footer={[
                 <Button key="cancel" onClick={onCancel}>Cancel</Button>,
-                <Button key="save" type="primary" onClick={onSave} icon={<SettingOutlined />}>Save Settings</Button>,
+                <Button key="save" type="primary" onClick={onSave}>Save Settings</Button>,
             ]}>
             <div className="advanced-settings-modal-scroll">
 
