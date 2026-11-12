@@ -31,7 +31,7 @@ export const InputCard: React.FC<InputCardProps> = (props: InputCardProps) => {
             <Col span={24} >
                 {/* Input OCR */}
                 <Card title="Input Text" extra={<Tag color="blue">{sourceLangName}</Tag>} >
-                    <Input.TextArea rows={8} value={sourceText} onChange={(e) => onSourceTextChange(e.target.value)} placeholder="Captured text will appear here..." className="result-card__textarea" />
+                    <Input.TextArea rows={8} value={sourceText} onChange={(e) => onSourceTextChange(e.target.value)} placeholder="Captured text will appear here..." className="input-card__textarea" />
                     <Typography.Text type="secondary" className="input-card__char-count">
                         {sourceText.length} Characters
                     </Typography.Text>

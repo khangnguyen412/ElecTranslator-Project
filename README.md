@@ -18,7 +18,7 @@ pnpm dev
 - Run backend:
 ```
 cd ./backend/
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 4120
 ```
 
 ## Technology in project:

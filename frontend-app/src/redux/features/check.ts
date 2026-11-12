@@ -9,51 +9,16 @@ import { backendCheck } from "@/services/CheckServices";
 /**
  * Type
  */
-import type { pythonStatus, pythonLibStatus, startBackend } from "@/types/check.type";
+import type { startBackend } from "@/types/check.type";
 import type { ErrorType } from "@/types/error.type";
 
 export interface CheckState {
     loading: boolean;
-    pythonStatus: pythonStatus;
-    pythonLibraryStatus: pythonLibStatus;
     startBackend: startBackend;
     error: ErrorType | undefined;
     message?: string;
 }
 
-export const requestPythonCheckThunk = createAsyncThunk<{ pythonStatus: pythonStatus }, null, { rejectValue: ErrorType }>(
-    'healthCheck/requestPythonCheck',
-    async (_, { rejectWithValue }) => {
-        try {
-            const PythonVersion = await window.electronAPI.checkPythonVersion();
-            return { pythonStatus: PythonVersion };
-        } catch (error: any) {
-            const errorData: ErrorType = {
-                error_code: error?.error_code || "EXCEPTION",
-                message: error?.message || "Python Check Failed",
-                error: error?.error || "Python Check Failed",
-            };
-            return rejectWithValue(errorData);
-        }
-    }
-)
-
-export const requestPythonLibraryCheckThunk = createAsyncThunk<{ pythonLibraryStatus: pythonLibStatus }, null, { rejectValue: ErrorType }>(
-    'healthCheck/requestPythonLibraryCheck',
-    async (_, { rejectWithValue }) => {
-        try {
-            const PythonLibrary = await window.electronAPI.checkPythonLibraryRequirements();
-            return { pythonLibraryStatus: PythonLibrary };
-        } catch (error: any) {
-            const errorData: ErrorType = {
-                error_code: error?.error_code || "EXCEPTION",
-                message: error?.message || "Python Check Failed",
-                error: error?.error || "Python Check Failed",
-            };
-            return rejectWithValue(errorData);
-        }
-    }
-)
 
 export const requestStartBackendThunk = createAsyncThunk<{ startBackendStatus: startBackend }, null, { rejectValue: ErrorType }>(
     'healthCheck/requestStartBackend',
@@ -77,43 +42,12 @@ const CheckSlice = createSlice({
     initialState: {
         loading: false,
         pythonStatus: { status: 'idle', version: '', message: '' },
-        pythonLibraryStatus: { status: 'idle', installed: [], missing: [], },
         startBackend: { status: 'idle', message: '' },
         error: undefined,
         message: undefined,
     } as CheckState,
     reducers: {},
     extraReducers: (builder) => {
-        /**
-         * Check Python Status
-         */
-        builder.addCase(requestPythonCheckThunk.pending, (state) => {
-            state.loading = true;
-        })
-        builder.addCase(requestPythonCheckThunk.fulfilled, (state, action) => {
-            state.loading = false;
-            state.pythonStatus = action.payload.pythonStatus;
-        })
-        builder.addCase(requestPythonCheckThunk.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload || { error_code: '', message: '', error: '' };
-        })
-
-        /**
-         * Check Python Library Status
-         */
-        builder.addCase(requestPythonLibraryCheckThunk.pending, (state) => {
-            state.loading = true;
-        })
-        builder.addCase(requestPythonLibraryCheckThunk.fulfilled, (state, action) => {
-            state.loading = false;
-            state.pythonLibraryStatus = action.payload.pythonLibraryStatus;
-        })
-        builder.addCase(requestPythonLibraryCheckThunk.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload || undefined;
-        })
-
         /**
          * Check Backend Status
          */

@@ -1,42 +1,91 @@
 /* eslint-disable */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import AppConfig from "@/config/app.config";
 
 /**
  * Redux
  */
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/redux/store';
-import { requestPythonCheckThunk, requestPythonLibraryCheckThunk, requestStartBackendThunk } from '@/redux/features/check';
+import { requestStartBackendThunk } from '@/redux/features/check';
 
 /**
  * Ant Design
  */
-import { Progress, Steps, Typography } from 'antd';
-
+import { Progress, Typography, Card, Col, Divider, Row, Space, Tag, Alert, Button } from 'antd';
+import { ApiOutlined, CheckCircleFilled, ClockCircleOutlined, CloseCircleFilled, PythonOutlined, LoadingOutlined, } from '@ant-design/icons';
 
 /**
  * Styles
  */
-import "@/assets/scss/loading.scss";
 import "@/assets/scss/page/checking.scss";
 
 /**
  * Type
  */
-import type { pythonStatus, pythonLibStatus, startBackend } from "@/types/check.type";
+import type { CheckStatus, CheckItem } from "@/types/check.type";
+
+const POLL_MS = 2000;
+const DEADLINE_MS = 5 * 60_000;
+const BACKEND_TRIES = 15;
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Components
+ * Check Items (runtime, backend)
  */
-import { getStepPythonEnvironment } from '@/components/checking/StepPythonEnvironment';
-import { getStepPythonLibrary } from '@/components/checking/StepPythonLibrary';
-import { getStepBackendApi } from '@/components/checking/StepBackendApi';
+const ITEMS: CheckItem[] = [
+    {
+        key: 'runtime',
+        title: 'Python Runtime',
+        description: 'Embedded Python Runtime',
+        meta: "poll pythonStatus() • every 2s • deadline 10'",
+        icon: <PythonOutlined />,
+        status: 'loading',
+        detail: 'Preparing...',
+    },
+    {
+        key: 'backend',
+        title: 'Backend',
+        description: `FastAPI service on port ${AppConfig.API_PORT}`,
+        meta: "startBackend() + health poll 15s",
+        icon: <ApiOutlined />,
+        status: 'waiting',
+        detail: 'Pending...',
+    },
+];
 
-import { SESSION_KEY } from '@/utils/check-session';
+/**
+ * Status Tag
+ */
+const StatusTag: React.FC<{ status: CheckStatus; detail?: string }> = ({ status, detail }) => {
+    return ({
+        success: <Tag icon={<CheckCircleFilled />} color="success">{detail ?? 'Ready'}</Tag>,
+        loading: <Tag icon={<LoadingOutlined spin />} color="processing">{detail ?? 'Checking...'}</Tag>,
+        error: <Tag icon={<CloseCircleFilled />} color="error">{detail ?? 'Failed'}</Tag>,
+        waiting: <Tag icon={<ClockCircleOutlined />} color="default">{detail ?? 'Waiting'}</Tag>
+    }[status]);
+}
 
-
-const { Text } = Typography;
+/**
+ * Check Row
+ */
+const CheckRow: React.FC<{ item: CheckItem }> = ({ item }) => {
+    return (
+        <Row gutter={[12, 8]} align="middle" className={`loading-item loading-item--${item.status}`}>
+            <Col><div className="loading-item-icon">{item.icon}</div></Col>
+            <Col flex="auto" className="loading-item-text">
+                <Typography.Text strong className="loading-item-title">{item.title}</Typography.Text>
+                <Typography.Text type="secondary" className="loading-item-desc">{item.description}</Typography.Text>
+                {item.meta && <Typography.Text type="secondary" className="loading-item-meta">{item.meta}</Typography.Text>}
+            </Col>
+            <Col>
+                <StatusTag status={item.status} detail={item.detail} />
+            </Col>
+        </Row>
+    )
+}
 
 const CheckingPage: React.FC = () => {
     /**
@@ -48,241 +97,115 @@ const CheckingPage: React.FC = () => {
     /**
      * State management
      */
-    const [pythonStatus, setPythonStatus] = useState<pythonStatus>({ status: 'idle' });
-    const [pythonLibraryStatus, setPythonLibraryStatus] = useState<pythonLibStatus>({ status: 'idle' });
-    const [startBackendStatus, setStartBackendStatus] = useState<startBackend>({ status: 'idle' });
-    const [scenario, setScenario] = useState<'idle' | 'success' | 'fallback' | 'error'>('idle');
-
-    const isAllReady = useMemo(() =>
-        pythonStatus?.status === 'success' &&
-        pythonLibraryStatus?.status === 'success' &&
-        startBackendStatus?.status === 'success',
-        [pythonStatus, pythonLibraryStatus, startBackendStatus]);
-
-    /**
-     * Sequential checks
-     */
-    const runSequentialChecks = async () => {
-        setScenario('idle');
-        setPythonStatus({ status: 'idle' });
-        setPythonLibraryStatus({ status: 'idle' });
-        setStartBackendStatus({ status: 'idle' });
-
-        let lastPythonStatus: pythonStatus = { status: 'idle' };
-        let lastPythonLibraryStatus: pythonLibStatus = { status: 'idle' };
-        let lastBackendStatus: startBackend = { status: 'idle' };
-
-        // Step 1: Python Environment
-        try {
-            const response = await dispatch(requestPythonCheckThunk(null)).unwrap();
-            if (response.pythonStatus?.status !== 'success') {
-                const errorInfo = {
-                    status: 'error' as const,
-                    message: response.pythonStatus?.message || 'Python check failed'
-                };
-                setPythonStatus(errorInfo);
-                throw errorInfo;
-            }
-            setPythonStatus({
-                status: 'success',
-                version: response.pythonStatus?.version || '',
-                message: response.pythonStatus?.message || ''
-            });
-            lastPythonStatus = {
-                status: 'success',
-                version: response.pythonStatus?.version || '',
-                message: response.pythonStatus?.message || ''
-            };
-        } catch (e) {
-            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-                scenario: 'error',
-                pythonStatus: e,
-                pythonLibraryStatus: lastPythonLibraryStatus,
-                backendStatus: lastBackendStatus,
-            }));
-            setTimeout(() => {
-                navigate('/error', { replace: true });
-            }, 3000);
-            return;
-        }
-
-        // Step 2: Python Library
-        try {
-            const response = await dispatch(requestPythonLibraryCheckThunk(null)).unwrap();
-            if (response.pythonLibraryStatus?.status !== 'success') {
-                const errorInfo = {
-                    status: 'error' as const,
-                    installed: response.pythonLibraryStatus?.installed || [],
-                    missing: response.pythonLibraryStatus?.missing || [],
-                    message: response.pythonLibraryStatus?.message || 'Python library check failed'
-                };
-                setPythonLibraryStatus(errorInfo);
-                throw errorInfo;
-            }
-            setPythonLibraryStatus({
-                status: 'success',
-                installed: response.pythonLibraryStatus?.installed || [],
-                missing: response.pythonLibraryStatus?.missing || [],
-                message: response.pythonLibraryStatus?.message || ''
-            });
-            lastPythonLibraryStatus = {
-                status: 'success',
-                installed: response.pythonLibraryStatus?.installed || [],
-                missing: response.pythonLibraryStatus?.missing || [],
-                message: response.pythonLibraryStatus?.message || ''
-            };
-        } catch (e) {
-            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-                scenario: 'error',
-                pythonStatus: lastPythonStatus,
-                pythonLibraryStatus: e,
-                backendStatus: lastBackendStatus,
-            }));
-            setTimeout(() => {
-                navigate('/error', { replace: true });
-            }, 3000);
-            return;
-        }
-
-        await window.electronAPI.startBackend();
-        let backendSuccess = false;
-        for (let i = 0; i < 15; i++) {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
-            try {
-                const response = await dispatch(requestStartBackendThunk(null)).unwrap();
-                if (response.startBackendStatus?.status === 'success') {
-                    setStartBackendStatus(response.startBackendStatus);
-                    lastBackendStatus = response.startBackendStatus;
-                    backendSuccess = true;
-                    break; // Exit loop if backend is ready
-                } else {
-                    setStartBackendStatus({
-                        status: 'error',
-                        message: response.startBackendStatus?.message || 'Backend not ready'
-                    });
-                }
-            } catch (e) {
-                if (i < 14) {
-                    console.log(`Waiting for backend...`);
-                }
-            }
-        }
-        if (!backendSuccess) {
-            const errorInfo = {
-                status: 'error' as const,
-                message: 'Backend not ready after 15 seconds'
-            };
-            setStartBackendStatus(errorInfo);
-            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-                scenario: 'error',
-                pythonStatus: lastPythonStatus,
-                pythonLibraryStatus: lastPythonLibraryStatus,
-                backendStatus: errorInfo,
-            }));
-            setTimeout(() => {
-                navigate('/error', { replace: true });
-            }, 3000);
-            return;
-        }
-
-        // Step 4: All checks passed
-        setScenario('success');
-        setTimeout(() => {
-            navigate('/translate');
-        }, 3000);
-    };
-
-    /**
-     * Get completion step based on status
-     */
-    const getCompletionStep = () => {
-        let step = 0;
-        if (pythonStatus.status === 'success') step++;
-        if (pythonLibraryStatus.status === 'success') step++;
-        if (startBackendStatus.status === 'success') step++;
-        return step;
+    const [attempt, setAttempt] = useState(0);
+    const [error, setError] = useState<string | null>(null);
+    const [items, setItems] = useState<CheckItem[]>(ITEMS);
+    const setItem = (key: string, patch: Partial<CheckItem>) => {
+        setItems((prev) => prev.map((i) => (i.key === key ? { ...i, ...patch } : i)));
     }
 
-    /**
-     * Step configuration
-     */
-    const stepConfig = {
-        orientation: 'vertical' as const,
-        current: getCompletionStep(),
-        items: [
-            getStepPythonEnvironment(pythonStatus),
-            getStepPythonLibrary(pythonLibraryStatus),
-            getStepBackendApi(startBackendStatus),
-        ],
+    const fail = (key: string, message: string) => {
+        setItem(key, { status: 'error', detail: message });
+        setError(message);
     }
 
-    /**
-     * Progress bar configuration
-     */
-    const progressConfig = {
-        percent: scenario === 'idle' ? Math.min(getCompletionStep() * (100 / 4), 100) : 100,
-        format: (percent: any) => {
-            if (scenario === 'idle') return (<span className="progress-percent">{Math.round(percent || 0)}%</span>);
-            return isAllReady && '✅ All Systems Ready';
-        },
-        strokeColor: { '0%': '#108ee9', '50%': '#00d4ff', '100%': isAllReady ? '#52c41a' : '#faad14' },
+    const retry = () => {
+        setError(null);
+        window.electronAPI.retryInstall()
+        setAttempt(prev => prev + 1);
     }
 
-    /**
-     * Run sequential checks
-     */
+    const done = items.filter((i) => i.status === 'success').length;
+    const percent = done / items.length * 100;
+
     useEffect(() => {
-        runSequentialChecks();
-    }, []);
+        (async () => {
+            // Phase 1: Check Python Runtime
+            setItems(ITEMS);
+            const deadline = Date.now() + DEADLINE_MS;
+            while (true) {
+                const checkRuntime = await window.electronAPI.pythonStatus();
+                if (checkRuntime.phase === 'ready') {
+                    setItem('runtime', { status: 'success', detail: 'ready' });
+                    break;
+                }
+
+                if (checkRuntime.phase === 'error') {
+                    return fail('runtime', checkRuntime.message ?? 'Python runtime failed to start');
+                }
+
+                if (Date.now() > deadline) {
+                    return fail('runtime', 'Python runtime start timeout');
+                }
+                await sleep(POLL_MS);
+            }
+
+            // Phase 2: Start Backend
+            setItem('backend', { status: 'loading', detail: 'Starting backend...' });
+            try {
+                await window.electronAPI.startBackend();
+            } catch (e:any) {
+                return fail('backend', e.message || 'Backend start failed');
+            }
+            for (let i = 0; i < BACKEND_TRIES; i++) {
+                await sleep(1000);
+                try {
+                    const checkBackend = await dispatch(requestStartBackendThunk(null)).unwrap();
+                    if (checkBackend.startBackendStatus?.status === 'success') {
+                        setItem('backend', { status: 'success', detail: 'ready' });
+                        setTimeout(() => navigate('/translate', { replace: true }), 3000);
+                        return;
+                    }
+                } catch { }
+            }
+            fail('backend', 'Backend start timeout');
+        })();
+    }, [attempt]);
 
     return (
-        <div className="flex-loading flex-col flex-col-fixed">
-            <div className="loading-container">
-                {/* Header */}
-                <div className="loading-header">
-                    <div className="logo-animation">
-                        <div className="loader">
-                            <div className="inner one"></div>
-                            <div className="inner two"></div>
-                            <div className="inner three"></div>
-                        </div>
-                    </div>
-                    <Typography.Title level={3}>
-                        ElecTranslator
-                    </Typography.Title>
-                    <Text type="secondary">Checking translation engine...</Text>
-                </div>
+        <Row justify="center" className="loading-page">
+            <Col xs={24} sm={22} md={16} lg={12} xl={10}>
+                <Card className="loading-card">
+                    {/* ===== Header ===== */}
+                    <Space orientation="vertical" align="center" size={4} className="loading-header">
+                        <LoadingOutlined spin style={{ fontSize: 42 }} className="loading-spinner" />
+                        <Typography.Title level={3} className="loading-title">
+                            Starting ElecTranslator
+                        </Typography.Title>
+                        <Typography.Text type="secondary" className="loading-subtitle">
+                            Starting embedded runtime &amp; backend service. Please keep the app open...
+                        </Typography.Text>
+                    </Space>
 
-                {/* Progress Steps */}
-                <div className="check-section">
-                    <Steps {...stepConfig} />
-                </div>
+                    {/* ===== Overall progress ===== */}
+                    <Progress
+                        percent={percent}
+                        status={percent === 100 ? 'success' : 'active'}
+                        className="loading-progress"
+                    />
 
-                {/* Overall Progress Bar */}
-                <div className="progress-section">
-                    <Progress {...progressConfig} />
-                    <Text type="secondary" className="progress-status-text">
-                        {scenario === 'idle' ? 'Please wait, checking system requirements...' : isAllReady ? '🚀 Ready to translate!' : '🔧 Some features limited - see details above'}
-                    </Text>
-                </div>
+                    {/* ===== Startup checks ===== */}
+                    <Divider plain className="loading-divider">
+                        Startup checks
+                    </Divider>
 
-                {/* Auto-continue hint */}
-                {scenario !== 'idle' && (
-                    <div className="auto-continue-hint">
-                        <Text type="secondary" className="auto-continue-text">
-                            Auto-continuing in <strong>3</strong> seconds...
-                        </Text>
-                    </div>
-                )}
-            </div>
+                    <Space orientation="vertical" size={12} className="loading-list">
+                        {items.map((item) => (
+                            <CheckRow key={item.key} item={item} />
+                        ))}
+                    </Space>
 
-            {/* Background decoration */}
-            <div className="loading-bg-decoration">
-                <div className="pulse-ring"></div>
-                <div className="pulse-ring delay-1"></div>
-                <div className="pulse-ring delay-2"></div>
-            </div>
-        </div>
+                    {error && (
+                        <Alert type="error" showIcon title={error} style={{ marginTop: 12 }} action={<Button size="small" onClick={retry}>Retry</Button>} />
+                    )}
+
+                    {/* ===== Footer note ===== */}
+                    <Typography.Text type="secondary" italic className="loading-footer">
+                        Translation is powered by your configured AI provider (Claude, OpenAI, Google or Custom endpoint).
+                    </Typography.Text>
+                </Card>
+            </Col>
+        </Row>
     );
 };
 

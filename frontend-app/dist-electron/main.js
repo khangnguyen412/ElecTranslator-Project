@@ -14,8 +14,6 @@ const electron_devtools_installer_1 = require("@tomjs/electron-devtools-installe
  * Module
  */
 const screenshot_1 = require("./module/screenshot/screenshot");
-const ocrRead_1 = require("./module/ocr/ocrRead");
-const serviceCheck_1 = require("./module/checking/serviceCheck");
 const serviceStartup_1 = require("./module/checking/serviceStartup");
 const store_1 = __importDefault(require("./module/store/store"));
 let overlayWindow = null;
@@ -46,11 +44,11 @@ function createOverlayWindow() {
     });
     overlayWindow.setAlwaysOnTop(true, 'screen-saver');
     if (isDev) {
-        overlayWindow.loadURL('http://localhost:5173/overlay');
+        overlayWindow.loadURL('http://localhost:5173/#/overlay');
         // overlayWindow.webContents.openDevTools()
     }
     else {
-        overlayWindow.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
+        overlayWindow.loadFile(path_1.default.join(__dirname, '../dist/index.html'), { hash: '/overlay' });
     }
     overlayWindow.webContents.once('did-finish-load', () => {
         overlayLoading = false;
@@ -106,6 +104,26 @@ function createWindow() {
  */
 const isDev = process.env.NODE_ENV === "development";
 /**
+ * Get Python dependencies status
+ */
+electron_1.ipcMain.handle('python-status', () => serviceStartup_1.dependenciesStatus);
+electron_1.ipcMain.handle('retry-install', () => {
+    (0, serviceStartup_1.ensureDependencies)().then(serviceStartup_1.startBackend).catch(() => { });
+    return true;
+});
+/**
+ * Start backend service
+ */
+electron_1.ipcMain.handle('start-backend', async () => {
+    try {
+        await (0, serviceStartup_1.startBackend)();
+        return { status: 'success' };
+    }
+    catch (error) {
+        return { status: 'error', message: error };
+    }
+});
+/**
  * Get setting from store
  */
 electron_1.ipcMain.handle('store:get-setting', () => {
@@ -149,60 +167,6 @@ electron_1.ipcMain.handle('store:add-history', (event, record) => {
 electron_1.ipcMain.handle('store:clear-history', () => {
     store_1.default.set("data.history", []);
     return true;
-});
-/**
- * Check Python version
- */
-electron_1.ipcMain.handle('check-python-version', async () => {
-    try {
-        const response = await (0, serviceCheck_1.checkPythonVersion)();
-        return response;
-    }
-    catch (error) {
-        return error;
-    }
-});
-/**
- * Start backend service
- */
-electron_1.ipcMain.handle('start-backend', async () => {
-    try {
-        await (0, serviceStartup_1.startBackend)();
-        return { status: 'success' };
-    }
-    catch (error) {
-        return { status: 'error', message: error };
-    }
-});
-/**
- * Check Python library requirements
- */
-electron_1.ipcMain.handle('check-python-library-requirements', async (event) => {
-    try {
-        const response = await (0, serviceCheck_1.checkPythonLibraryRequirements)();
-        return response;
-    }
-    catch (error) {
-        return { message: error };
-    }
-});
-/**
- * OCR image using Python
- */
-electron_1.ipcMain.handle('ocr-image-python', async (event, base64Data, lang = "en") => {
-    return new Promise((resolve) => {
-        const pythonProcess = (0, ocrRead_1.getOCRCreatePythonProcess)(lang);
-        /**
-         * Push resolve function to queue for this language
-         */
-        ocrRead_1.ocrRequests[lang].push(resolve);
-        /**
-         * Send base64 data to python process stdin and end with \n (do not use .end())
-         * Trim base64 data to remove leading/trailing whitespace and newline characters
-         */
-        const cleanBase64 = base64Data.trim().replace(/\r?\n|\r/g, "");
-        pythonProcess.stdin.write(cleanBase64 + '\n');
-    });
 });
 /**
  * Register capture-screen event
@@ -286,6 +250,9 @@ electron_1.app.whenReady().then(async () => {
     createWindow();
     createOverlayWindow();
     (0, serviceStartup_1.setupBackendCleanup)();
+    (0, serviceStartup_1.ensureDependencies)().then(serviceStartup_1.startBackend).catch((e) => {
+        console.error('[Dependencies]', e.message);
+    });
 });
 electron_1.app.on("window-all-closed", () => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
@@ -302,10 +269,5 @@ electron_1.app.on("activate", () => {
  * Register Kill all python processes when app quits
  */
 electron_1.app.on('will-quit', () => {
-    for (const lang in ocrRead_1.pythonProcesses) {
-        if (ocrRead_1.pythonProcesses[lang]) {
-            ocrRead_1.pythonProcesses[lang].kill();
-        }
-    }
     (0, serviceStartup_1.stopBackend)();
 });

@@ -7,16 +7,11 @@ interface Window {
         captureScreen: () => Promise<{ base64: string; error?: string }>
 
         /**
-         * Check Python Version
+         * Check Python dependencies status
          */
-        checkPythonVersion: () => Promise<{ status: status; version?: string; message?: string; }>
-        checkPythonLibraryRequirements: () => Promise<{ status: status; installed?: string[]; missing?: string[]; message?: string; }>
+        pythonStatus: () => Promise<{ phase: 'idle' | 'starting' | 'installing' | 'ready' | 'error' ; message?: string; lastError?: string; installID?: number}>
+        retryInstall: () => Promise<void>
         startBackend: () => Promise<void>
-
-        /**
-         * OCR Image Python
-         */
-        ocrImagePython: (base64Data: string, lang: string | string[]) => Promise<{ success: boolean; data?: Array<{ text: string; confidence: number }>; error?: string; }>;
 
         /**
          * Trigger Translate

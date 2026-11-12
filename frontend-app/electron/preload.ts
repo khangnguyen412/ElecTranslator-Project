@@ -13,8 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /**
      * Checking System Status
      */
-    checkPythonVersion: () => ipcRenderer.invoke('check-python-version'),
-    checkPythonLibraryRequirements: () => ipcRenderer.invoke('check-python-library-requirements'),
+    pythonStatus: () => ipcRenderer.invoke('python-status'),
+    retryInstall: () => ipcRenderer.invoke('retry-install'),
     startBackend: () => ipcRenderer.invoke('start-backend'),
 
     /**

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBackendUtilsPath = exports.getResourceElectronPath = void 0;
+exports.getResourceElectronPath = void 0;
 const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
@@ -41,19 +41,3 @@ const getResourceElectronPath = (baseDir, filePath) => {
     }
 };
 exports.getResourceElectronPath = getResourceElectronPath;
-/**
- * Get backend utils path
- */
-const getBackendUtilsPath = () => {
-    /**
-     * In dev environment, __dirname is usually dist-electron/module/checking
-     * We need to go back 3 levels: checking -> module -> dist-electron -> frontend-app -> root -> backend/utils
-     */
-    const devPath = path_1.default.join(__dirname, '../../../backend/utils/check_dependencies.py');
-    /**
-     * Note: When building (packaging), the structure may change.
-     * You may need to copy check_dependencies.py to resources folder or handle production path separately.
-     */
-    return devPath;
-};
-exports.getBackendUtilsPath = getBackendUtilsPath;

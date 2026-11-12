@@ -19,21 +19,43 @@
     "productName": "ElecTranslator",
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*.js",
+      "!dist-electron/**/*.map",
+      "package.json",
+      ".env"
     ],
     "extraResources": [
       {
-        "from": "python/**/*",
-        "to": "python",
+        "from": "assets",
+        "to": "assets"
+      },
+      {
+        "from": "electron/module/screenshot",
+        "to": "screenshot",
+        "filter": [
+          "*.html"
+        ]
+      },
+      {
+        "from": "resources/python",
+        "to": "python"
+      },
+      {
+        "from": "resources/wheels",
+        "to": "wheels"
+      },
+      {
+        "from": "resources/scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "../backend",
+        "to": "backend",
         "filter": [
           "**/*",
           "!**/__pycache__",
           "!**/*.pyc"
         ]
-      },
-      {
-        "from": "assets/**/*",
-        "to": "assets"
       }
     ],
     "win": {

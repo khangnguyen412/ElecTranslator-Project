@@ -1,5 +1,5 @@
 import React, {} from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, RouterProvider } from 'react-router-dom';
 
 /**
  * Redux
@@ -20,7 +20,7 @@ import { routes as AdminRoute } from '@/routes/routes';
 const routes = [
   ...AdminRoute,
 ];
-const router = createBrowserRouter(routes);
+const router = createHashRouter(routes);
 
 function App() {
   return (
