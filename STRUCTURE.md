@@ -12,6 +12,7 @@ ElecTranslator
 │  │        ├─ lastfailed
 │  │        └─ nodeids
 │  ├─ app
+│  │  ├─ config.py
 │  │  ├─ exceptions
 │  │  │  ├─ exceptions.py
 │  │  │  └─ __init__.py
@@ -29,6 +30,15 @@ ElecTranslator
 │  │  │  ├─ translate_schema.py
 │  │  │  └─ __init__.py
 │  │  └─ services
+│  │     ├─ ai_provider
+│  │     │  ├─ anthropic_ai_service.py
+│  │     │  ├─ base_service.py
+│  │     │  ├─ factory_service.py
+│  │     │  ├─ google_ai_service.py
+│  │     │  ├─ ninerouter_ai_service.py
+│  │     │  ├─ ollama_ai_service.py
+│  │     │  ├─ openai_ai_service.py
+│  │     │  └─ __init__.py
 │  │     ├─ ai_service.py
 │  │     ├─ ocr_service.py
 │  │     ├─ translate_service.py
@@ -46,70 +56,11 @@ ElecTranslator
 │  ├─ assets
 │  │  ├─ logo.ico
 │  │  └─ logo.png
-│  ├─ dist
-│  │  ├─ assets
-│  │  │  ├─ button-BJX9Xykt.js
-│  │  │  ├─ check-session-CF9k1ngw.css
-│  │  │  ├─ check-session-j3IC67XP.js
-│  │  │  ├─ CheckingPage-BJVb8p_N.js
-│  │  │  ├─ CheckingPage-CKKcR3aS.css
-│  │  │  ├─ ExceptionPage-D88AtueW.js
-│  │  │  ├─ ExceptionPage-DZ7g0v-k.css
-│  │  │  ├─ index-B5BXDqMa.css
-│  │  │  ├─ index-Dtb6ncai.js
-│  │  │  ├─ logo-Bt3hN40y.png
-│  │  │  ├─ message-DnDMomZ3.js
-│  │  │  ├─ Overlay-DE5xVQvQ.js
-│  │  │  ├─ row-CosMCbAK.js
-│  │  │  ├─ tag-CJ944MC2.js
-│  │  │  ├─ TranslatePage-BdYTgAt-.js
-│  │  │  └─ typography-VHMC56hC.js
-│  │  ├─ favicon.svg
-│  │  ├─ icons.svg
-│  │  ├─ index.html
-│  │  └─ overlay
-│  │     ├─ assets
-│  │     │  ├─ button-BJX9Xykt.js
-│  │     │  ├─ check-session-CF9k1ngw.css
-│  │     │  ├─ check-session-j3IC67XP.js
-│  │     │  ├─ CheckingPage-BJVb8p_N.js
-│  │     │  ├─ CheckingPage-CKKcR3aS.css
-│  │     │  ├─ ExceptionPage-D88AtueW.js
-│  │     │  ├─ ExceptionPage-DZ7g0v-k.css
-│  │     │  ├─ index-B5BXDqMa.css
-│  │     │  ├─ index-Dtb6ncai.js
-│  │     │  ├─ logo-Bt3hN40y.png
-│  │     │  ├─ message-DnDMomZ3.js
-│  │     │  ├─ Overlay-DE5xVQvQ.js
-│  │     │  ├─ row-CosMCbAK.js
-│  │     │  ├─ tag-CJ944MC2.js
-│  │     │  ├─ TranslatePage-BdYTgAt-.js
-│  │     │  └─ typography-VHMC56hC.js
-│  │     ├─ favicon.svg
-│  │     ├─ icons.svg
-│  │     └─ index.html
-│  ├─ dist-electron
-│  │  ├─ main.js
-│  │  ├─ module
-│  │  │  ├─ checking
-│  │  │  │  ├─ serviceCheck.js
-│  │  │  │  └─ serviceStartup.js
-│  │  │  ├─ ocr
-│  │  │  │  └─ ocrRead.js
-│  │  │  ├─ screenshot
-│  │  │  │  └─ screenshot.js
-│  │  │  └─ store
-│  │  │     └─ store.js
-│  │  ├─ preload.js
-│  │  ├─ type
-│  │  │  └─ store.type.js
-│  │  └─ utils
-│  │     └─ getResourcePath.js
 │  ├─ electron
+│  │  ├─ config.ts
 │  │  ├─ main.ts
 │  │  ├─ module
 │  │  │  ├─ checking
-│  │  │  │  ├─ serviceCheck.ts
 │  │  │  │  └─ serviceStartup.ts
 │  │  │  ├─ ocr
 │  │  │  │  └─ ocrRead.ts
@@ -125,7 +76,6 @@ ElecTranslator
 │  │  │  └─ store.type.ts
 │  │  └─ utils
 │  │     └─ getResourcePath.ts
-│  ├─ electron-builder.json
 │  ├─ eslint.config.js
 │  ├─ index.html
 │  ├─ package.json
@@ -142,18 +92,17 @@ ElecTranslator
 │  │  ├─ App.tsx
 │  │  ├─ assets
 │  │  │  ├─ hero.png
+│  │  │  ├─ logo.png
 │  │  │  ├─ react.svg
 │  │  │  ├─ scss
-│  │  │  │  ├─ loading.scss
+│  │  │  │  ├─ background.scss
+│  │  │  │  ├─ layout
+│  │  │  │  │  └─ main.scss
 │  │  │  │  └─ page
 │  │  │  │     ├─ checking.scss
-│  │  │  │     └─ exception.scss
+│  │  │  │     └─ stranslate.scss
 │  │  │  └─ vite.svg
 │  │  ├─ components
-│  │  │  ├─ checking
-│  │  │  │  ├─ StepBackendApi.tsx
-│  │  │  │  ├─ StepPythonEnvironment.tsx
-│  │  │  │  └─ StepPythonLibrary.tsx
 │  │  │  ├─ Popup.tsx
 │  │  │  └─ translation
 │  │  │     ├─ AdvancedSettingsModal.tsx
@@ -163,20 +112,18 @@ ElecTranslator
 │  │  ├─ config
 │  │  │  ├─ app.config.ts
 │  │  │  ├─ language.config.ts
+│  │  │  ├─ theme.config.ts
 │  │  │  └─ translationOptions.config.ts
 │  │  ├─ DefaultTemplate.tsx
 │  │  ├─ env.d.ts
 │  │  ├─ hook
 │  │  │  ├─ useBackendCheck.ts
-│  │  │  ├─ usePythonCheck.ts
-│  │  │  ├─ usePythonLibraryCheck.ts
 │  │  │  ├─ useTranslation.ts
 │  │  │  └─ useTranslationSettings.ts
 │  │  ├─ index.css
 │  │  ├─ main.tsx
 │  │  ├─ page
 │  │  │  ├─ CheckingPage.tsx
-│  │  │  ├─ ExceptionPage.tsx
 │  │  │  ├─ layout
 │  │  │  │  └─ MainLayout.tsx
 │  │  │  ├─ Overlay.tsx
@@ -204,8 +151,6 @@ ElecTranslator
 │  │  │  ├─ store.type.ts
 │  │  │  └─ translate.type.ts
 │  │  └─ utils
-│  │     ├─ check-session.ts
-│  │     └─ checking-icon.tsx
 │  ├─ tsconfig.app.json
 │  ├─ tsconfig.json
 │  ├─ tsconfig.node.json

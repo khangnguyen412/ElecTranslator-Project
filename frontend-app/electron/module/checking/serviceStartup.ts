@@ -1,18 +1,101 @@
+/* eslint-disable */
 import { app } from 'electron';
 import { spawn, ChildProcess, exec, execSync } from 'child_process';
 import path from 'path';
-
+import fs from 'fs';
+import { createHash } from 'crypto';
+import { API_HOST, API_PORT } from '../../config';
 
 export let backendProcess: ChildProcess | null = null;
+export let dependenciesStatus: { phase: 'idle' | 'installing' | 'ready' | 'error'; message?: string } = { phase: 'idle' };
+
+
+const envRoot = () => path.join(app.getPath('userData'), 'python-env');
+const sources = () => app.isPackaged ? {
+    python: path.join(process.resourcesPath, 'python'),
+    wheels: path.join(process.resourcesPath, 'wheels'),
+    scripts: path.join(process.resourcesPath, 'scripts'),
+    backend: path.join(process.resourcesPath, 'backend')
+} : {
+    python: path.join(app.getAppPath(), 'resources', 'python'),
+    wheels: path.join(app.getAppPath(), 'resources', 'wheels'),
+    scripts: path.join(app.getAppPath(), 'resources', 'scripts'),
+    backend: path.join(app.getAppPath(), '..', 'backend')
+};
+
+
+export const ensureDependencies = async (): Promise<void> => {
+    if (dependenciesStatus.phase === 'installing') {
+        return;
+    }
+
+    dependenciesStatus.phase = 'installing';
+    try {
+        const src = sources();
+        const env = envRoot();
+        const python = path.join(env, 'python', 'python.exe'); // windows only
+        const requirementDeps = path.join(src.backend, 'requirements.txt');
+        const marker = path.join(env, '.deps_installed');
+        const hash = createHash('md5').update(fs.readFileSync(requirementDeps)).digest('hex');
+
+        /**
+         * Check if dependencies are already installed -> match -> skip installation
+         */
+        if (fs.existsSync(marker) && fs.readFileSync(marker, 'utf-8') === hash) {
+            dependenciesStatus.phase = 'ready';
+            return;
+        }
+
+        /**
+         * Kill backend process if running
+         * Remove existing environment if it exists
+         */
+        await killBackend();
+        fs.rmSync(env, { recursive: true, force: true });
+        for (const item of ['python', 'wheels', 'scripts'] as const) {
+            fs.cpSync(src[item], path.join(env, item), { recursive: true });
+        }
+
+        /**
+         * Create python-env/backend/ in userData and copy requirements.txt from backend
+         */
+        fs.mkdirSync(path.join(env, 'backend'), { recursive: true });
+        fs.copyFileSync(requirementDeps, path.join(env, 'backend', 'requirements.txt'));
+
+        /**
+         * Run script to install dependencies
+         */
+        const log = fs.createWriteStream(path.join(env, 'install.log'), { flags: 'a' });
+        const child = spawn(python, ['-s', path.join(env, 'scripts', 'install_deps.py')]);
+        child.stdout!.pipe(log); child.stderr!.pipe(log);
+
+        await new Promise<void>((resolve, reject) => {
+            const t = setTimeout(() => { child.kill(); reject(new Error('Install timeout 5 minutes')); }, 5 * 60_000);
+            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — xem ${path.join(env, 'install.log')}`)); });
+            child.on('error', reject);
+        });
+
+        /**
+         * Install dependencies successfully
+         * Write marker file to indicate installation is done for skip reinstall in next time
+         */
+        fs.writeFileSync(marker, hash);
+        dependenciesStatus = { phase: 'ready' };
+    } catch (error: any) {
+        dependenciesStatus.phase = 'error';
+        dependenciesStatus.message = error.message;
+        throw error;
+    }
+};
 
 const killBackend = (): Promise<void> => {
     return new Promise((resolve) => {
         if (process.platform === 'win32') {
             /**
              * On Windows
-             * Find PID and kill process on port 8000
+             * Find PID and kill process on port PORT
              */
-            const command = `for /f "tokens=5" %a in ('netstat -ano ^| findstr :8000') do taskkill /F /PID %a`;
+            const command = `for /f "tokens=5" %a in ('netstat -ano ^| findstr ":${API_PORT}" ^| findstr "LISTENING"') do taskkill /F /PID %a`;
 
             exec(command, (error, stdout, stderr) => {
                 if (error) {
@@ -20,25 +103,25 @@ const killBackend = (): Promise<void> => {
                      * If no process found, ignore the error
                      */
                     if (!stderr.includes("Could not find any process")) {
-                        console.log('[Cleanup] No process found on port 8000 or already cleared.');
+                        console.log(`[Cleanup] No process found on port ${API_PORT} or already cleared.`);
                     }
                 } else {
-                    console.log('[Cleanup] Successfully killed process on port 8000.');
+                    console.log(`[Cleanup] Successfully killed process on port ${API_PORT}.`);
                 }
                 resolve();
             });
         } else {
             /**
              * On Unix
-             * Find PID and kill process on port 8000
+             * Find PID and kill process on port PORT
              */
-            const command = 'lsof -ti :8000 | xargs kill -9';
+            const command = `lsof -ti :${API_PORT} | xargs kill -9`;
 
             exec(command, (error) => {
                 if (error) {
-                    console.log('[Cleanup] No process found on port 8000 (Unix).');
+                    console.log(`[Cleanup] No process found on port ${API_PORT} (Unix).`);
                 } else {
-                    console.log('[Cleanup] Successfully killed process on port 8000 (Unix).');
+                    console.log(`[Cleanup] Successfully killed process on port ${API_PORT}.`);
                 }
                 resolve();
             });
@@ -51,14 +134,19 @@ export const startBackend = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         const initBackend = async () => {
             try {
-                console.log('[Backend] Ensuring port 8000 is free...');
-                await killBackend();
-
                 /**
                  * Stop old backend instance if running
                  */
                 if (backendProcess) {
-                    console.log('[Backend] Backend is already running. Stopping old instance...');
+                    console.log('[Backend] Already running.');
+                    resolve();
+                    return;
+                }
+                console.log(`[Backend] Ensuring port ${API_PORT} is free...`);
+                await killBackend();
+
+                if (backendProcess) {
+                    console.log('[Backend] Already running (won after kill).');
                     resolve();
                     return;
                 }
@@ -69,12 +157,12 @@ export const startBackend = (): Promise<void> => {
                 /**
                  * Spawn new backend process instance if not running
                  */
-                backendProcess = spawn('python', ['-m', 'uvicorn', 'main:app', '--port', '8000'], {
+                backendProcess = spawn(path.join(envRoot(), 'python', 'python.exe'), ['-s', '-m', 'uvicorn', 'main:app', '--host', API_HOST, '--port', API_PORT], {
                     cwd: backendPath,
-                    shell: true,
                     env: { ...process.env },
                     stdio: ['ignore', 'pipe', 'pipe']
                 });
+                console.log(`[Backend] Spawned pid ${backendProcess.pid}`);
 
                 let isResolved = false;
                 let startupTimeout: NodeJS.Timeout | undefined = undefined;
@@ -85,13 +173,20 @@ export const startBackend = (): Promise<void> => {
                         if (!isResolved) {
                             isResolved = true;
                             if (startupTimeout) clearTimeout(startupTimeout);
-                            console.warn('[Backend Warning] Port 8000 is busy. Assuming it is our old instance or another service.');
+                            console.warn(`[Backend Warning] Port ${API_PORT} is busy. Assuming it is our old instance or another service.`);
                             /**
                              * Kill the process if it's our old instance or another service
                              */
                             backendProcess?.kill();
                             backendProcess = null;
-                            reject(new Error('[Backend Error] Port 8000 is already in use. Please close other instances.'));
+                            reject(new Error(`[Backend Error] Port ${API_PORT} is already in use. Please close other instances.`));
+                        }
+                    } else if (log.includes("Uvicorn running on") || log.includes("Application startup complete")) {
+                        console.log(`[Backend Info] ${log}`);
+                        if (!isResolved) {
+                            isResolved = true;
+                            if (startupTimeout) clearTimeout(startupTimeout);
+                            resolve();
                         }
                     } else if (log.includes("ERROR") || log.includes("Traceback")) {
                         console.error(`[Backend Critical] ${log}`);
@@ -143,7 +238,7 @@ export const startBackend = (): Promise<void> => {
                         }
                         reject(new Error('[Backend Error] Backend failed to start within timeout'));
                     }
-                }, 5000);
+                }, 60_000);
 
             } catch (error) {
                 reject(error);
@@ -233,15 +328,15 @@ export const setupBackendCleanup = () => {
     });
 
     /**
-     * Force-cleanup port 8000 when app closes or process exits
+     * Force-cleanup port PORT when app closes or process exits
      */
     process.on('exit', async () => {
-        console.log('[Cleanup] Force-cleaning port 8000...');
+        console.log(`[Cleanup] Force-cleaning port ${API_PORT}...`);
         try {
             if (process.platform === 'win32') {
-                execSync('for /f "tokens=5" %a in (\'netstat -ano ^| findstr :8000\') do taskkill /F /PID %a', { stdio: 'ignore' });
+                execSync(`for /f "tokens=5" %a in (\'netstat -ano ^| findstr ":${API_PORT}" ^| findstr "LISTENING"\') do taskkill /F /PID %a`, { stdio: 'ignore' });
             } else {
-                execSync('lsof -ti :8000 | xargs kill -9 2>/dev/null', { stdio: 'ignore' });
+                execSync(`lsof -ti :${API_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
             }
         } catch {
             console.log('[Cleanup] No process found — fine');

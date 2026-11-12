@@ -1,6 +1,10 @@
+import uvicorn
+import app.config as config
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
 
 from app.routers import ApiResponse, process_ocr, process_translate, process_ai_translate
 from app.schema import ErrorResponse, HealthResponse
@@ -40,3 +44,7 @@ app.include_router(process_ai_translate, prefix="/api/ai", tags=["AI"])
 @app.get("/api/health")
 def health_check() -> ApiResponse:
     return ApiResponse(success=True, message="Health check passed.", data=HealthResponse())
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host=config.HOST, port=config.PORT)

@@ -1,225 +1,162 @@
-// =========================================
-// Checking Page Styles
-// File: checking.scss
-// ========================================= 
+// =============================================
+// CheckingPage Startup Screen Styles
+// Used by: CheckingPage.tsx (runtime check + backend check)
+// Class names are `loading-*` for historical reasons (page used to be LoadingPage; old empty loading.scss deleted)
+// =============================================
 
-/* ---------- Main container ---------- */
-.loading-container {
-    width: 100%;
-    max-width: 520px;
-    padding: 40px 32px;
-    background: #ffffff08;
-    border-radius: 20px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    z-index: 10;
-    position: relative;
-}
+// ── Page Wrapper (CheckingPage.tsx) ─────────────────────
 
-/* ---------- Header ---------- */
-.loading-header {
-    text-align: center;
-    margin-bottom: 32px;
+.loading-page {
+    min-height: 100%;
+    padding: 40px 0;
 
-    .logo-animation {
-        animation: float 3s ease-in-out infinite;
-        justify-content: center;
-        display: flex;
-    }
+    .loading-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 
-    .ant-typography {
-        margin: 16px 0 4px !important;
-        background: linear-gradient(90deg, #00d4ff, #7b2cbf, #00d4ff);
-        background-size: 200% auto;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: gradient-shift 3s linear infinite;
-    }
-}
-
-/* ---------- Steps: Python Env → Python Library → Backend API ---------- */
-.check-section {
-    margin: 24px 0;
-
-    .ant-steps {
-        background-color: transparent;
-    }
-
-    .ant-steps-item {
-        padding: 8px 0;
-
-        .ant-steps-item-title {
-            color: #fff !important;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .ant-steps-item-description {
-            color: #ffffffa6 !important;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        .ant-steps-item-icon {
-            background: #ffffff1a !important;
-            border-color: #ffffff33 !important;
-
-            .ant-steps-icon {
-                color: #fff !important;
-            }
-        }
-
-        &.ant-steps-item-finish {
-            .ant-steps-item-icon {
-                background: #52c41a33 !important;
-                border-color: #52c41a !important;
-            }
-        }
-
-        &.ant-steps-item-error {
-            .ant-steps-item-icon {
-                background: #ff4d4f33 !important;
-                border-color: #ff4d4f !important;
-            }
+        .ant-card-body {
+            padding: 32px;
         }
     }
 
-    .ant-steps-item-tail {
-        &::after {
-            background: #ffffff1a !important;
+    /* ===== Header ===== */
+    .loading-header {
+        width: 100%;
+        text-align: center;
+
+        .loading-spinner {
+            color: #1677ff;
+            margin-bottom: 8px;
+        }
+
+        .loading-title {
+            margin-bottom: 0;
+        }
+
+        .loading-subtitle {
+            font-size: 13px;
         }
     }
-}
 
-/* ---------- Progress bar ---------- */
-.progress-section {
-    margin: 24px 0 16px;
-
-    .ant-progress-text {
-        color: #ffffffd9 !important;
-        font-size: 13px !important;
-        font-weight: 500;
+    /* ===== Progress ===== */
+    .loading-progress {
+        margin: 28px 0 4px;
     }
 
-    .progress-percent {
-        color: #ffffff;
-    }
-
-    .progress-status-text {
-        font-size: 11px;
-        display: block;
-        margin-top: 4px;
-        color: #ffffffa6;
-    }
-}
-
-/* ---------- Auto-continue hint ---------- */
-.auto-continue-hint {
-    text-align: center;
-    padding: 12px;
-    background: #1890ff1a;
-    border-radius: 8px;
-    border: 1px solid #1890ff33;
-    animation: pulse-hint 2s ease-in-out infinite;
-
-    .auto-continue-text {
+    .loading-divider {
+        margin: 16px 0;
         font-size: 12px;
-        color: #ffffffa6;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(0, 0, 0, 0.45);
+    }
+
+    /* ===== Check list ===== */
+    .loading-list {
+        width: 100%;
+    }
+
+    .loading-item {
+        padding: 12px 16px;
+        border: 1px solid #f0f0f0;
+        border-radius: 10px;
+        background: #fafafa;
+        transition: all 0.25s ease;
+
+        .loading-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: #f5f5f5;
+            color: rgba(0, 0, 0, 0.45);
+        }
+
+        .loading-item-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.45;
+        }
+
+        .loading-item-desc {
+            font-size: 12px;
+        }
+
+        &--success {
+            .loading-item-icon {
+                background: #f6ffed;
+                color: #52c41a;
+            }
+        }
+
+        &--loading {
+            border-color: #91caff;
+            background: #f0f7ff;
+            animation: loading-pulse 1.6s ease-in-out infinite;
+
+            .loading-item-icon {
+                background: #e6f4ff;
+                color: #1677ff;
+            }
+        }
+
+        &--error {
+            border-color: #ffccc7;
+            background: #fff2f0;
+
+            .loading-item-icon {
+                background: #fff1f0;
+                color: #ff4d4f;
+            }
+        }
+
+        &--waiting {
+            opacity: 0.65;
+        }
+    }
+
+    /* ===== Footer note ===== */
+    .loading-footer {
+        display: block;
+        margin-top: 24px;
+        text-align: center;
+        font-size: 12px;
     }
 }
 
-/* ---------- Background decoration ---------- */
-.loading-bg-decoration {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
+// ── Row Pulse Animation (used by .loading-item--loading) ─────────────────────
 
-    .pulse-ring {
-        position: absolute;
-        border-radius: 50%;
-        border: 2px solid #1890ff26;
-        animation: pulse-ring 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-
-        &.delay-1 {
-            animation-delay: -1.33s;
-        }
-
-        &.delay-2 {
-            animation-delay: -2.66s;
-        }
-    }
-}
-
-/* ---------- Animations ---------- */
-@keyframes float {
+@keyframes loading-pulse {
 
     0%,
     100% {
-        transform: translateY(0px);
+        box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.15);
     }
 
     50% {
-        transform: translateY(-8px);
+        box-shadow: 0 0 0 6px rgba(22, 119, 255, 0.08);
     }
 }
 
-@keyframes gradient-shift {
-    0% {
-        background-position: 0% center;
+// ── Item Text Block (duplicated rules in .loading-item above; only adds .loading-item-meta — merge when touched) ─────────────────────
+
+.loading-item-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.45;
+
+    .loading-item-desc {
+        font-size: 12px;
     }
 
-    100% {
-        background-position: 200% center;
-    }
-}
-
-@keyframes pulse-hint {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.7;
-    }
-}
-
-@keyframes pulse-ring {
-    0% {
-        width: 200px;
-        height: 200px;
-        opacity: 1;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    100% {
-        width: 800px;
-        height: 800px;
-        opacity: 0;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-}
-
-// Responsive
-@media (max-width: 600px) {
-    .loading-container {
-        margin: 16px;
-        padding: 24px 20px;
-    }
-
-    .ant-result-title {
-        font-size: 18px !important;
+    .loading-item-meta {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.35);
+        margin-top: 2px;
     }
 }

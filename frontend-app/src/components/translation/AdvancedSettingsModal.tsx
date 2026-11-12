@@ -131,12 +131,7 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({ op
                     </Row>
                 </Card>
 
-                <Card title={<span>API Providers</span>} size="small" className="advanced-settings-card"
-                    extra={
-                        <Space>
-                            <Typography.Text style={{ fontSize: 13 }}>Default:</Typography.Text>
-                        </Space>
-                    }>
+                <Card title={<span>API Providers</span>} size="small" className="advanced-settings-card">
                     <div className="advanced-settings-provider-list">
                         {providers.map((provider, index) => (
                             <Card

@@ -37,20 +37,3 @@ export const getResourceElectronPath = (baseDir: string, filePath: string): stri
         return path.join(process.resourcesPath, baseDir, filePath);
     }
 }
-
-/**
- * Get backend utils path
- */
-export const getBackendUtilsPath = () => {
-    /**
-     * In dev environment, __dirname is usually dist-electron/module/checking
-     * We need to go back 3 levels: checking -> module -> dist-electron -> frontend-app -> root -> backend/utils
-     */
-    const devPath = path.join(__dirname, '../../../backend/utils/check_dependencies.py');
-
-    /**
-     * Note: When building (packaging), the structure may change.
-     * You may need to copy check_dependencies.py to resources folder or handle production path separately.
-     */
-    return devPath;
-};

@@ -16,7 +16,7 @@ numpy>=1.24.0
 
 # --- 3. OCR Engines ---
 paddleocr>=2.7.0
-easyocr>=1.7.0
+paddlepaddle>=3.0.0
 
 # --- 4. Translation ---
 deep-translator>=1.11.0 
@@ -24,3 +24,8 @@ deep-translator>=1.11.0
 # --- 5. Utilities ---
 python-dotenv>=1.0.0
 requests>=2.31.0
+
+# --- 6. AI Services ---
+openai>=1.30.0
+anthropic>=0.34.0
+google-genai>=1.0.0

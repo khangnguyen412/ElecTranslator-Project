@@ -11,9 +11,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
  * Module
  */
 import { captureRegionInteractive } from './module/screenshot/screenshot'
-import { pythonProcesses, ocrRequests, getOCRCreatePythonProcess } from "./module/ocr/ocrRead";
-import { checkPythonVersion, checkPythonLibraryRequirements } from "./module/checking/serviceCheck";
-import { startBackend, setupBackendCleanup, stopBackend, backendProcess } from "./module/checking/serviceStartup";
+import { ensureDependencies, dependenciesStatus, startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
 let overlayWindow: BrowserWindow | null = null;
@@ -50,10 +48,10 @@ function createOverlayWindow() {
     overlayWindow.setAlwaysOnTop(true, 'screen-saver');
 
     if (isDev) {
-        overlayWindow.loadURL('http://localhost:5173/overlay');
+        overlayWindow.loadURL('http://localhost:5173/#/overlay');
         // overlayWindow.webContents.openDevTools()
     } else {
-        overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+        overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: '/overlay' });
     }
 
     overlayWindow.webContents.once('did-finish-load', () => {
@@ -109,11 +107,31 @@ function createWindow() {
     });
 }
 
-
 /**
  * Check if application is running in development mode
  */
 const isDev = process.env.NODE_ENV === "development";
+
+/**
+ * Get Python dependencies status
+ */
+ipcMain.handle('python-status', () => dependenciesStatus)
+ipcMain.handle('retry-install', () => {
+    ensureDependencies().then(startBackend).catch(() => {});
+    return true;
+})
+
+/**
+ * Start backend service
+ */
+ipcMain.handle('start-backend', async () => {
+    try {
+        await startBackend();
+        return { status: 'success' };
+    } catch (error) {
+        return { status: 'error', message: error };
+    }
+});
 
 /**
  * Get setting from store
@@ -167,63 +185,6 @@ ipcMain.handle('store:clear-history', () => {
     store.set("data.history", [])
     return true
 })
-
-/**
- * Check Python version
- */
-ipcMain.handle('check-python-version', async () => {
-    try {
-        const response = await checkPythonVersion();
-        return response;
-    } catch (error: any) {
-        return error;
-    }
-});
-
-/**
- * Start backend service
- */
-ipcMain.handle('start-backend', async () => {
-    try {
-        await startBackend();
-        return { status: 'success' };
-    } catch (error) {
-        return { status: 'error', message: error };
-    }
-});
-
-/**
- * Check Python library requirements
- */
-ipcMain.handle('check-python-library-requirements', async (event) => {
-    try {
-        const response = await checkPythonLibraryRequirements();
-        return response;
-    } catch (error: any) {
-        return { message: error };
-    }
-});
-
-/**
- * OCR image using Python
- */
-ipcMain.handle('ocr-image-python', async (event, base64Data: string, lang: string = "en") => {
-    return new Promise((resolve) => {
-        const pythonProcess = getOCRCreatePythonProcess(lang);
-
-        /**
-         * Push resolve function to queue for this language
-         */
-        ocrRequests[lang].push(resolve);
-
-        /**
-         * Send base64 data to python process stdin and end with \n (do not use .end())
-         * Trim base64 data to remove leading/trailing whitespace and newline characters
-         */
-        const cleanBase64 = base64Data.trim().replace(/\r?\n|\r/g, "");
-        pythonProcess.stdin.write(cleanBase64 + '\n');
-    });
-});
 
 /**
  * Register capture-screen event
@@ -311,7 +272,6 @@ ipcMain.handle('show-translated-text', async (_event, title: string, body: Array
  */
 app.setAppUserModelId('com.electranslator.app');
 
-
 app.whenReady().then(async () => {
     if (isDev) {
         await installExtension(REACT_DEVELOPER_TOOLS)
@@ -320,6 +280,10 @@ app.whenReady().then(async () => {
     createWindow();
     createOverlayWindow();
     setupBackendCleanup();
+
+    ensureDependencies().then(startBackend).catch((e) => { 
+        console.error('[Dependencies]', e.message); 
+    });
 })
 
 app.on("window-all-closed", () => {
@@ -337,11 +301,5 @@ app.on("activate", () => {
  * Register Kill all python processes when app quits
  */
 app.on('will-quit', () => {
-    for (const lang in pythonProcesses) {
-        if (pythonProcesses[lang]) {
-            pythonProcesses[lang].kill();
-        }
-    }
-
     stopBackend();
 });

@@ -12,8 +12,8 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     /**
      * Checking System Status
      */
-    checkPythonVersion: () => electron_1.ipcRenderer.invoke('check-python-version'),
-    checkPythonLibraryRequirements: () => electron_1.ipcRenderer.invoke('check-python-library-requirements'),
+    pythonStatus: () => electron_1.ipcRenderer.invoke('python-status'),
+    retryInstall: () => electron_1.ipcRenderer.invoke('retry-install'),
     startBackend: () => electron_1.ipcRenderer.invoke('start-backend'),
     /**
      * Trigger Capture
