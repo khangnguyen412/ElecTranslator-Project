@@ -1,8 +1,19 @@
 {
   "name": "electranslator",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
+  "description": "Capture on-screen manga/comic text and translate to Vietnamese with local LLM or cloud AI.",
   "main": "dist-electron/main.js",
+  "packageManager": "pnpm@10.15.0",
+  "author": {
+    "name": "Khang Nguyen",
+    "email": "ronglun412@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khangnguyen412/ElecTranslator-Project.git"
+  },
+  "license": "MIT",
   "scripts": {
     "build:electron": "tsc -p electron/tsconfig.json",
     "build:overlay": "vite build --outDir dist/overlay --base ./",
@@ -12,17 +23,27 @@
     "clean": "rimraf release dist",
     "dev": "concurrently --kill-others \"vite\" \"npm run electron:dev\"",
     "electron:dev": "wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && cross-env NODE_ENV=development electron . ",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:bundle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-bundle.ps1",
+    "verify:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-bundle.ps1 -Strict"
   },
   "build": {
     "appId": "com.electranslator.app",
     "productName": "ElecTranslator",
+    "asar": true,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "khangnguyen412",
+        "repo": "ElecTranslator-Project",
+        "releaseType": "draft"
+      }
+    ],
     "files": [
       "dist/**/*",
       "dist-electron/**/*.js",
       "!dist-electron/**/*.map",
-      "package.json",
-      ".env"
+      "package.json"
     ],
     "extraResources": [
       {
@@ -37,14 +58,6 @@
         ]
       },
       {
-        "from": "resources/python",
-        "to": "python"
-      },
-      {
-        "from": "resources/wheels",
-        "to": "wheels"
-      },
-      {
         "from": "resources/scripts",
         "to": "scripts"
       },
@@ -53,8 +66,14 @@
         "to": "backend",
         "filter": [
           "**/*",
-          "!**/__pycache__",
-          "!**/*.pyc"
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/*.pyo",
+          "!.env",
+          "!.env.*",
+          "!.pytest_cache/**",
+          "!tests/**",
+          "!**/*.log"
         ]
       }
     ],
@@ -62,14 +81,22 @@
       "icon": "assets/logo.png",
       "target": "nsis"
     },
-    "directories": {
-      "output": "release"
-    },
     "mac": {
-      "target": "dmg"
+      "icon": "assets/logo.png",
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "linux": {
-      "target": "AppImage"
+      "icon": "assets/logo.png",
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    },
+    "directories": {
+      "output": "release"
     }
   },
   "dependencies": {

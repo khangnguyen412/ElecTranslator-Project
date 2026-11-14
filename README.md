@@ -1,7 +1,8 @@
 # ElecTranslator
 This project for ElecTranslator:
-- Description: This project aims to build a lightweight desktop application that captures real-time on-screen manga/comic text and translates it into Vietnamese. The entire translation pipeline runs completely offline, ensuring data privacy and zero API costs by utilizing a local Large Language Model (LLM).
-- Constraints: Uses Electron + React (use pnpm), scalable backend, local and loud AI translation engine.
+
+- Description: This project aims to build a lightweight desktop application that runs 100% locally on the user's machine to capture on-screen manga/comic text and translate it into Vietnamese. To balance data privacy and translation quality, the translation engine supports a hybrid architecture, allowing users to seamlessly switch between a local Large Language Model (LLM) for offline use and third-party cloud AI APIs.
+- Constraints: Uses Electron + React (use pnpm), backend (FastAPI), hybrid AI translation engine (Local LLM & Third-party Cloud APIs).
 
 ## How to start and testing project
 - Install dependencies python:

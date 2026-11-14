@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setupBackendCleanup = exports.stopBackend = exports.startBackend = exports.ensureDependencies = exports.dependenciesStatus = exports.backendProcess = void 0;
+exports.cleanupBackend = exports.stopBackend = exports.startBackend = exports.ensureDependencies = exports.dependenciesStatus = exports.backendProcess = void 0;
 /* eslint-disable */
 const electron_1 = require("electron");
 const child_process_1 = require("child_process");
@@ -13,6 +13,8 @@ const crypto_1 = require("crypto");
 const config_1 = require("../../config");
 exports.backendProcess = null;
 exports.dependenciesStatus = { phase: 'idle' };
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/0.1.1/runtime-win-0.1.1.zip';
+const RUNTIME_SHA256 = 'c656734e70804eabbfe234816ded9c67f5cdd63524c19122e7ab261664f59c70';
 const envRoot = () => path_1.default.join(electron_1.app.getPath('userData'), 'python-env');
 const sources = () => electron_1.app.isPackaged ? {
     python: path_1.default.join(process.resourcesPath, 'python'),
@@ -24,6 +26,37 @@ const sources = () => electron_1.app.isPackaged ? {
     wheels: path_1.default.join(electron_1.app.getAppPath(), 'resources', 'wheels'),
     scripts: path_1.default.join(electron_1.app.getAppPath(), 'resources', 'scripts'),
     backend: path_1.default.join(electron_1.app.getAppPath(), '..', 'backend')
+};
+const ensureRuntime = async (env, src) => {
+    if (fs_1.default.existsSync(path_1.default.join(env, 'python', 'python.exe')) || fs_1.default.existsSync(path_1.default.join(src.python, 'python.exe')))
+        return;
+    const zip = path_1.default.join(electron_1.app.getPath('userData'), 'runtime-win.zip');
+    if (!fs_1.default.existsSync(zip)) {
+        exports.dependenciesStatus.message = 'Downloading runtime...';
+        const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60000) });
+        if (!res.ok)
+            throw new Error('Runtime URL tra ve ' + res.status);
+        const out = fs_1.default.createWriteStream(zip + '.part');
+        const total = Number(res.headers.get('content-length') ?? 0);
+        let got = 0;
+        for await (const chunk of res.body ?? []) {
+            const buf = Buffer.from(chunk);
+            out.write(buf);
+            got += buf.length;
+            if (total)
+                exports.dependenciesStatus.message = `Downloading runtime... ${Math.round(got / total * 100)}%`;
+        }
+        await new Promise((r, j) => { out.on('close', r); out.on('error', j); out.close(); });
+        const h = (0, crypto_1.createHash)('sha256').update(fs_1.default.readFileSync(zip + '.part')).digest('hex');
+        if (h !== RUNTIME_SHA256) {
+            fs_1.default.rmSync(zip + '.part');
+            throw new Error('SHA256 runtime khong khop');
+        }
+        fs_1.default.renameSync(zip + '.part', zip);
+    }
+    exports.dependenciesStatus.message = 'Unpacking runtime...';
+    fs_1.default.mkdirSync(env, { recursive: true });
+    (0, child_process_1.execSync)(`tar -xf "${zip}" -C "${env}"`);
 };
 const ensureDependencies = async () => {
     if (exports.dependenciesStatus.phase === 'installing') {
@@ -49,9 +82,11 @@ const ensureDependencies = async () => {
          * Remove existing environment if it exists
          */
         await killBackend();
-        fs_1.default.rmSync(env, { recursive: true, force: true });
+        fs_1.default.rmSync(env, { recursive: true, force: true, maxRetries: 5, retryDelay: 1000 });
+        await ensureRuntime(env, src);
         for (const item of ['python', 'wheels', 'scripts']) {
-            fs_1.default.cpSync(src[item], path_1.default.join(env, item), { recursive: true });
+            if (fs_1.default.existsSync(src[item]))
+                fs_1.default.cpSync(src[item], path_1.default.join(env, item), { recursive: true });
         }
         /**
          * Create python-env/backend/ in userData and copy requirements.txt from backend
@@ -289,7 +324,7 @@ exports.stopBackend = stopBackend;
 /**
  * Setup Cleanup backend process when app closes
  */
-const setupBackendCleanup = () => {
+const cleanupBackend = () => {
     /**
      * Handle cleanup when app closes
      */
@@ -333,4 +368,4 @@ const setupBackendCleanup = () => {
         }
     });
 };
-exports.setupBackendCleanup = setupBackendCleanup;
+exports.cleanupBackend = cleanupBackend;

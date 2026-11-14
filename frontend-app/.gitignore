@@ -31,3 +31,9 @@ dist-ssr
 resources/python/
 resources/wheels/
 release/
+
+# OS generated files
+dist-electron
+release
+resources/python
+resources/wheels

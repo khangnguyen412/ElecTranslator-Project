@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  # ───────────────────────────────────────────────
+  # Job 1: Check release condition
+  # ───────────────────────────────────────────────
+  guard:
+    name: Check release condition
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       github.event.pull_request.base.ref == 'main' &&
+       github.event.pull_request.head.ref == 'develop')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pkg.outputs.version }}
+      release: ${{ steps.decide.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Read version from package.json
+        id: pkg
+        run: |
+          V=$(node -p "require('./frontend-app/package.json').version")
+          if [ -z "$V" ] || [ "$V" = "undefined" ]; then
+            echo "::error::Can't read version from package.json. Check key 'version' in frontend-app/package.json"
+            exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Version on GitHub main: $V"
+
+      - name: Decide whether to release
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          CI_ENABLED: ${{ vars.CI_ENABLED }}
+        run: |
+          if [ "$CI_ENABLED" != "true" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CI_ENABLED not enabled. Skip build. Will Release after processing resources/."
+            exit 0
+          fi
+          if gh release list --limit 200 --json tagName --jq '.[].tagName' | grep -qx "v$VERSION"; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$VERSION already has release -> skip build."
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$VERSION does not have release -> start build."
+          fi
+
+  # ───────────────────────────────────────────────
+  # Job 2: Build Windows + publish to GitHub Release
+  # ───────────────────────────────────────────────
+  build:
+    name: Build ${{ matrix.os }}
+    needs: guard
+    if: needs.guard.outputs.release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: --win
+          # - os: ubuntu-latest
+          #   args: --linux
+          # - os: macos-latest
+          #   args: --mac
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: frontend-app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend-app/pnpm-lock.yaml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify runtime resources
+        shell: bash
+        run: |
+          [ -d resources/scripts ] || { echo "::error::Thieu resources/scripts"; exit 1; }
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - name: Build unpacked (no publish)
+        run: pnpm exec electron-builder ${{ matrix.args }} --dir
+
+      - name: Verify bundle
+        run: pnpm verify:bundle
+
+      - name: Build installer & publish draft release
+        run: pnpm exec electron-builder ${{ matrix.args }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

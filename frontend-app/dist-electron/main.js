@@ -249,7 +249,7 @@ electron_1.app.whenReady().then(async () => {
     }
     createWindow();
     createOverlayWindow();
-    (0, serviceStartup_1.setupBackendCleanup)();
+    (0, serviceStartup_1.cleanupBackend)();
     (0, serviceStartup_1.ensureDependencies)().then(serviceStartup_1.startBackend).catch((e) => {
         console.error('[Dependencies]', e.message);
     });
