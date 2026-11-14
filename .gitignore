@@ -5,3 +5,31 @@ openclaw*
 /openclaw
 /opencode
 /memory
+
+# Dependencies / build output
+node_modules/
+dist/
+dist-electron/
+release/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Runtime nặng - không commit
+frontend-app/resources/python/
+frontend-app/resources/wheels/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db

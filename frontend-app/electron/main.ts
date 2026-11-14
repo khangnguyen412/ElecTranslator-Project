@@ -11,7 +11,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
  * Module
  */
 import { captureRegionInteractive } from './module/screenshot/screenshot'
-import { ensureDependencies, dependenciesStatus, startBackend, setupBackendCleanup, stopBackend } from "./module/checking/serviceStartup";
+import { ensureDependencies, dependenciesStatus, startBackend, cleanupBackend, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
 let overlayWindow: BrowserWindow | null = null;
@@ -279,7 +279,7 @@ app.whenReady().then(async () => {
     }
     createWindow();
     createOverlayWindow();
-    setupBackendCleanup();
+    cleanupBackend();
 
     ensureDependencies().then(startBackend).catch((e) => { 
         console.error('[Dependencies]', e.message); 

@@ -9,6 +9,8 @@ import { API_HOST, API_PORT } from '../../config';
 export let backendProcess: ChildProcess | null = null;
 export let dependenciesStatus: { phase: 'idle' | 'installing' | 'ready' | 'error'; message?: string } = { phase: 'idle' };
 
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/0.1.1/runtime-win-0.1.1.zip';
+const RUNTIME_SHA256 = 'c656734e70804eabbfe234816ded9c67f5cdd63524c19122e7ab261664f59c70';
 
 const envRoot = () => path.join(app.getPath('userData'), 'python-env');
 const sources = () => app.isPackaged ? {
@@ -23,7 +25,43 @@ const sources = () => app.isPackaged ? {
     backend: path.join(app.getAppPath(), '..', 'backend')
 };
 
+/**
+ * Ensure runtime is available
+ * @param env 
+ * @param src 
+ * @returns 
+ */
+const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Promise<void> => {
+    if (fs.existsSync(path.join(env, 'python', 'python.exe')) || fs.existsSync(path.join(src.python, 'python.exe'))) return;
+    const zip = path.join(app.getPath('userData'), 'runtime-win.zip');
 
+    if (!fs.existsSync(zip)) {
+        dependenciesStatus.message = 'Downloading runtime...';
+        const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60_000) });
+        if (!res.ok) throw new Error('Runtime URL tra ve ' + res.status);
+        const out = fs.createWriteStream(zip + '.part');
+        const total = Number(res.headers.get('content-length') ?? 0);
+        let got = 0;
+        for await (const chunk of res.body ?? []) {
+            const buf = Buffer.from(chunk as ArrayBuffer);
+            out.write(buf); got += buf.length;
+            if (total) dependenciesStatus.message = `Downloading runtime... ${Math.round(got / total * 100)}%`;
+        }
+        await new Promise<void>((r, j) => { out.on('close', r); out.on('error', j); out.close(); });
+        const h = createHash('sha256').update(fs.readFileSync(zip + '.part')).digest('hex');
+        if (h !== RUNTIME_SHA256) { fs.rmSync(zip + '.part'); throw new Error('SHA256 runtime khong khop'); }
+        fs.renameSync(zip + '.part', zip);
+    }
+
+    dependenciesStatus.message = 'Unpacking runtime...';
+    fs.mkdirSync(env, { recursive: true });
+    execSync(`tar -xf "${zip}" -C "${env}"`);
+};
+
+/**
+ * Ensure dependencies are available
+ * @returns 
+ */
 export const ensureDependencies = async (): Promise<void> => {
     if (dependenciesStatus.phase === 'installing') {
         return;
@@ -51,9 +89,10 @@ export const ensureDependencies = async (): Promise<void> => {
          * Remove existing environment if it exists
          */
         await killBackend();
-        fs.rmSync(env, { recursive: true, force: true });
+        fs.rmSync(env, { recursive: true, force: true, maxRetries: 5, retryDelay: 1000 });
+        await ensureRuntime(env, src);
         for (const item of ['python', 'wheels', 'scripts'] as const) {
-            fs.cpSync(src[item], path.join(env, item), { recursive: true });
+            if (fs.existsSync(src[item])) fs.cpSync(src[item], path.join(env, item), { recursive: true });
         }
 
         /**
@@ -301,7 +340,7 @@ export const stopBackend = async (): Promise<void> => {
 /**
  * Setup Cleanup backend process when app closes
  */
-export const setupBackendCleanup = () => {
+export const cleanupBackend = () => {
     /**
      * Handle cleanup when app closes
      */
