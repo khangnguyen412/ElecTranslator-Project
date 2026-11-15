@@ -38,7 +38,7 @@ const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Prom
     if (!fs.existsSync(zip)) {
         dependenciesStatus.message = 'Downloading runtime...';
         const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60_000) });
-        if (!res.ok) throw new Error('Runtime URL tra ve ' + res.status);
+        if (!res.ok) throw new Error('Runtime URL response status ' + res.status);
         const out = fs.createWriteStream(zip + '.part');
         const total = Number(res.headers.get('content-length') ?? 0);
         let got = 0;
@@ -49,7 +49,7 @@ const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Prom
         }
         await new Promise<void>((r, j) => { out.on('close', r); out.on('error', j); out.close(); });
         const h = createHash('sha256').update(fs.readFileSync(zip + '.part')).digest('hex');
-        if (h !== RUNTIME_SHA256) { fs.rmSync(zip + '.part'); throw new Error('SHA256 runtime khong khop'); }
+        if (h !== RUNTIME_SHA256.toLowerCase()) { fs.rmSync(zip + '.part'); throw new Error('SHA256 runtime not match'); }
         fs.renameSync(zip + '.part', zip);
     }
 
