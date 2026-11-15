@@ -13,8 +13,8 @@ const crypto_1 = require("crypto");
 const config_1 = require("../../config");
 exports.backendProcess = null;
 exports.dependenciesStatus = { phase: 'idle' };
-const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/0.1.1/runtime-win-0.1.1.zip';
-const RUNTIME_SHA256 = 'c656734e70804eabbfe234816ded9c67f5cdd63524c19122e7ab261664f59c70';
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v2/runtime-win-v2.zip';
+const RUNTIME_SHA256 = 'EF83B17CDFBA14749F1FC711B546841F816F506EA12C74B8824837CB29DF82C7';
 const envRoot = () => path_1.default.join(electron_1.app.getPath('userData'), 'python-env');
 const sources = () => electron_1.app.isPackaged ? {
     python: path_1.default.join(process.resourcesPath, 'python'),
@@ -27,6 +27,12 @@ const sources = () => electron_1.app.isPackaged ? {
     scripts: path_1.default.join(electron_1.app.getAppPath(), 'resources', 'scripts'),
     backend: path_1.default.join(electron_1.app.getAppPath(), '..', 'backend')
 };
+/**
+ * Ensure runtime is available
+ * @param env
+ * @param src
+ * @returns
+ */
 const ensureRuntime = async (env, src) => {
     if (fs_1.default.existsSync(path_1.default.join(env, 'python', 'python.exe')) || fs_1.default.existsSync(path_1.default.join(src.python, 'python.exe')))
         return;
@@ -58,6 +64,10 @@ const ensureRuntime = async (env, src) => {
     fs_1.default.mkdirSync(env, { recursive: true });
     (0, child_process_1.execSync)(`tar -xf "${zip}" -C "${env}"`);
 };
+/**
+ * Ensure dependencies are available
+ * @returns
+ */
 const ensureDependencies = async () => {
     if (exports.dependenciesStatus.phase === 'installing') {
         return;
