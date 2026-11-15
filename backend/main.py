@@ -1,10 +1,13 @@
+import warnings; 
+# Much place warning filter here before import any module
+warnings.filterwarnings("ignore", message=r'.*protected namespace "model_".*', category=UserWarning)
+
 import uvicorn
 import app.config as config
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 
 from app.routers import ApiResponse, process_ocr, process_translate, process_ai_translate
 from app.schema import ErrorResponse, HealthResponse

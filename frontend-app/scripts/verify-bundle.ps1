@@ -10,8 +10,8 @@ $warn = @()
 Write-Host "== ElecTranslator bundle check ==" -ForegroundColor Cyan
 
 if (-not (Test-Path $res)) {
-  Write-Host "FAIL  Khong thay: $res" -ForegroundColor Red
-  Write-Host "      Chay 'pnpm dist' hoac 'pnpm release' truoc." -ForegroundColor Yellow
+  Write-Host "FAIL  Not found: $res" -ForegroundColor Red
+  Write-Host "Please run 'pnpm dist' or 'pnpm release' first." -ForegroundColor Yellow
   exit 1
 }
 
@@ -25,45 +25,45 @@ if (Test-Path $yml) {
     if ($ymlVersion -ne $pkgVersion) {
       $fail += "latest.yml ($ymlVersion) != package.json ($pkgVersion)"
     } else {
-      Write-Host "  version $pkgVersion : khop latest.yml"
+      Write-Host "  version $pkgVersion : OK"
     }
   }
 } else {
-  $warn += "Khong thay release/latest.yml"
+  $warn += "Not found release/latest.yml"
 }
 
 # 2. File .env must be excluded from bundle
 $envFiles = @(Get-ChildItem $root -Recurse -Force -File -Include '.env','.env.*' -ErrorAction SilentlyContinue)
-foreach ($f in $envFiles) { $fail += "LO SECRET: $($f.FullName)" }
+foreach ($f in $envFiles) { $fail += "Found secret file: $($f.FullName)" }
 
 # 3. Private key (except CA bundle from certifi)
 $keys = @(Get-ChildItem $root -Recurse -Force -File -Include '*.pem','*.key' -ErrorAction SilentlyContinue |
           Where-Object { $_.Name -ne 'cacert.pem' -and $_.FullName -notmatch 'certifi|\\ssl\\' })
-foreach ($f in $keys) { $warn += "Nghi la key, xem thu: $($f.FullName)" }
+foreach ($f in $keys) { $warn += "Found private key file: $($f.FullName)" }
 
 # 4. app-update.yml
 if (Test-Path (Join-Path $res 'app-update.yml')) {
   Write-Host "  app-update.yml : OK"
 } elseif ($Strict) {
-  $fail += "Thieu resources/app-update.yml -> auto-update khong chay"
+  $fail += "Not found resources/app-update.yml -> auto-update disabled."
 } else {
-  $warn += "Thieu app-update.yml - binh thuong voi 'pnpm dist', BAT BUOC co khi 'pnpm release'"
+  $warn += "Not found app-update.yml"
 }
 
 # 5. Resource bundle must be excluded from bundle
 foreach ($d in @('backend', 'scripts', 'assets','screenshot')) {
   if (Test-Path (Join-Path $res $d)) { Write-Host "  resources/$d : OK" }
-  else { $fail += "Thieu resources/$d" }
+  else { $fail += "Not found resources/$d" }
 }
 
-# 6. Rac in backend must be excluded from bundle
+# 6. Trash files in backend must be excluded from bundle
 foreach ($p in @('backend\tests','backend\.pytest_cache')) {
-  if (Test-Path (Join-Path $res $p)) { $fail += "Con rac: resources/$p" }
+  if (Test-Path (Join-Path $res $p)) { $fail += "Trash file: resources/$p" }
 }
 $backendDir = Join-Path $res 'backend'
 if (Test-Path $backendDir) {
   $pyc = @(Get-ChildItem $backendDir -Recurse -Force -Directory -Filter '__pycache__' -ErrorAction SilentlyContinue)
-  if ($pyc.Count) { $fail += "Con $($pyc.Count) thu muc __pycache__" }
+  if ($pyc.Count) { $fail += "Found: resources/backend/__pycache__ - $($pyc.Count) directories" }
 }
 
 foreach ($w in $warn) { Write-Host "WARN  $w" -ForegroundColor Yellow }

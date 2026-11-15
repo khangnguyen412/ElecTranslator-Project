@@ -33,7 +33,7 @@ const BACKEND_TRIES = 15;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Check Items (runtime, backend)
+ * Check items content (runtime, backend)
  */
 const ITEMS: CheckItem[] = [
     {
@@ -57,7 +57,7 @@ const ITEMS: CheckItem[] = [
 ];
 
 /**
- * Status Tag
+ * Status tag component
  */
 const StatusTag: React.FC<{ status: CheckStatus; detail?: string }> = ({ status, detail }) => {
     return ({
@@ -69,7 +69,7 @@ const StatusTag: React.FC<{ status: CheckStatus; detail?: string }> = ({ status,
 }
 
 /**
- * Check Row
+ * Check row component
  */
 const CheckRow: React.FC<{ item: CheckItem }> = ({ item }) => {
     return (
