@@ -15,8 +15,8 @@ opencv-python>=4.8.0
 numpy>=1.24.0
 
 # --- 3. OCR Engines ---
-paddleocr>=2.7.0
-paddlepaddle>=3.0.0
+paddleocr==3.4.0
+paddlepaddle==3.3.1
 
 # --- 4. Translation ---
 deep-translator>=1.11.0 

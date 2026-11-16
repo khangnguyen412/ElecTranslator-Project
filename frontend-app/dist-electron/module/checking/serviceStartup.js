@@ -9,12 +9,16 @@ const electron_1 = require("electron");
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const os_1 = require("os");
 const crypto_1 = require("crypto");
+/**
+ * Config
+ */
 const config_1 = require("../../config");
 exports.backendProcess = null;
 exports.dependenciesStatus = { phase: 'idle' };
-const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v2/runtime-win-v2.zip';
-const RUNTIME_SHA256 = 'EF83B17CDFBA14749F1FC711B546841F816F506EA12C74B8824837CB29DF82C7';
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v3/runtime-win-v3.zip';
+const RUNTIME_SHA256 = '6E53491A88EA69938203DC4DFB0D8239E86C85B3FEE28C620410AC23FB8326B8';
 const envRoot = () => path_1.default.join(electron_1.app.getPath('userData'), 'python-env');
 const sources = () => electron_1.app.isPackaged ? {
     python: path_1.default.join(process.resourcesPath, 'python'),
@@ -112,7 +116,7 @@ const ensureDependencies = async () => {
         child.stderr.pipe(log);
         await new Promise((resolve, reject) => {
             const t = setTimeout(() => { child.kill(); reject(new Error('Install timeout 5 minutes')); }, 5 * 60000);
-            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — xem ${path_1.default.join(env, 'install.log')}`)); });
+            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — please check ${path_1.default.join(env, 'install.log')}`)); });
             child.on('error', reject);
         });
         /**
@@ -120,6 +124,7 @@ const ensureDependencies = async () => {
          * Write marker file to indicate installation is done for skip reinstall in next time
          */
         fs_1.default.writeFileSync(marker, hash);
+        fs_1.default.rmSync(path_1.default.join((0, os_1.homedir)(), '.paddlex'), { recursive: true, force: true });
         exports.dependenciesStatus = { phase: 'ready' };
     }
     catch (error) {
