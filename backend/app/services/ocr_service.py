@@ -128,6 +128,8 @@ class PaddleOCRService:
         try:
             with redirect_stdout(devnull), redirect_stderr(devnull):
                 cls._ocr_engine = PaddleOCR(
+                    use_doc_orientation_classify=False,
+                    use_doc_unwarping=False,
                     use_textline_orientation=False,
                     lang=paddle_lang,
                     det_db_thresh=0.3,
@@ -181,5 +183,7 @@ class PaddleOCRService:
                 raise NotFoundError("No text detected")
             return OCRResponse(source_text=source_text)
 
+        except AppException:
+            raise
         except Exception as e:
             raise AppException(status_code=500, error_code="EXCEPTION", message="OCR failed", error=str(e))

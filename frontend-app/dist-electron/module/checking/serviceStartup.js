@@ -41,7 +41,7 @@ const ensureRuntime = async (env, src) => {
         exports.dependenciesStatus.message = 'Downloading runtime...';
         const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60000) });
         if (!res.ok)
-            throw new Error('Runtime URL tra ve ' + res.status);
+            throw new Error('Runtime URL response status ' + res.status);
         const out = fs_1.default.createWriteStream(zip + '.part');
         const total = Number(res.headers.get('content-length') ?? 0);
         let got = 0;
@@ -54,9 +54,9 @@ const ensureRuntime = async (env, src) => {
         }
         await new Promise((r, j) => { out.on('close', r); out.on('error', j); out.close(); });
         const h = (0, crypto_1.createHash)('sha256').update(fs_1.default.readFileSync(zip + '.part')).digest('hex');
-        if (h !== RUNTIME_SHA256) {
+        if (h !== RUNTIME_SHA256.toLowerCase()) {
             fs_1.default.rmSync(zip + '.part');
-            throw new Error('SHA256 runtime khong khop');
+            throw new Error('SHA256 runtime not match');
         }
         fs_1.default.renameSync(zip + '.part', zip);
     }
