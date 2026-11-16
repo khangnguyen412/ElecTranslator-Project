@@ -3,14 +3,19 @@ import { app } from 'electron';
 import { spawn, ChildProcess, exec, execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { homedir } from 'os';
 import { createHash } from 'crypto';
+
+/**
+ * Config
+ */
 import { API_HOST, API_PORT } from '../../config';
 
 export let backendProcess: ChildProcess | null = null;
 export let dependenciesStatus: { phase: 'idle' | 'installing' | 'ready' | 'error'; message?: string } = { phase: 'idle' };
 
-const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v2/runtime-win-v2.zip';
-const RUNTIME_SHA256 = 'EF83B17CDFBA14749F1FC711B546841F816F506EA12C74B8824837CB29DF82C7';
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v3/runtime-win-v3.zip';
+const RUNTIME_SHA256 = '6E53491A88EA69938203DC4DFB0D8239E86C85B3FEE28C620410AC23FB8326B8';
 
 const envRoot = () => path.join(app.getPath('userData'), 'python-env');
 const sources = () => app.isPackaged ? {
@@ -110,7 +115,7 @@ export const ensureDependencies = async (): Promise<void> => {
 
         await new Promise<void>((resolve, reject) => {
             const t = setTimeout(() => { child.kill(); reject(new Error('Install timeout 5 minutes')); }, 5 * 60_000);
-            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — xem ${path.join(env, 'install.log')}`)); });
+            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — please check ${path.join(env, 'install.log')}`)); });
             child.on('error', reject);
         });
 
@@ -119,6 +124,7 @@ export const ensureDependencies = async (): Promise<void> => {
          * Write marker file to indicate installation is done for skip reinstall in next time
          */
         fs.writeFileSync(marker, hash);
+        fs.rmSync(path.join(homedir(), '.paddlex'), { recursive: true, force: true });
         dependenciesStatus = { phase: 'ready' };
     } catch (error: any) {
         dependenciesStatus.phase = 'error';
