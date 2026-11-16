@@ -1,6 +1,7 @@
 import os
 import base64
 import warnings
+import logging
 import numpy as np
 import cv2
 from typing import List, Dict, Any, Optional
@@ -24,6 +25,7 @@ os.environ["FLAGS_logtostderr"] = "0"
 os.environ["GLOG_minloglevel"] = "3"
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 warnings.filterwarnings("ignore")
+logging.basicConfig() 
 
 VALID_LANGS = {"ch", "en", "vi", "japan", "korean", "chinese_cht", "latin", "arabic", "ta", "te", "ka", "devanagari"}
 

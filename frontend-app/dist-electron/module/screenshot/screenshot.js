@@ -1,15 +1,23 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.captureRegionInteractive = void 0;
 const electron_1 = require("electron");
 const canvas_1 = require("canvas");
 const util_1 = require("util");
 const url_1 = require("url");
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const getResourcePath_1 = require("../../utils/getResourcePath");
 /**
  * Disable hardware acceleration (Fix black screen issue when capturing video or other apps due to GPU conflict.)
  */
-electron_1.app.disableHardwareAcceleration();
+const flagFile = (name) => path_1.default.join(electron_1.app.getPath('userData'), name);
+if (!fs_1.default.existsSync(flagFile('hw-accel-on'))) {
+    electron_1.app.disableHardwareAcceleration();
+}
 /**
  * Compose all screen captures and crop to the selected region.
  */
@@ -25,8 +33,8 @@ const composeScreens = async (x, y, width, height) => {
     const sources = await electron_1.desktopCapturer.getSources({
         types: ['screen'],
         thumbnailSize: {
-            width: maxX - minX,
-            height: maxY - minY,
+            width: Math.max(...displays.map((d) => Math.round(d.bounds.width * d.scaleFactor))),
+            height: Math.max(...displays.map((d) => Math.round(d.bounds.height * d.scaleFactor))),
         },
     });
     const canvas = new canvas_1.Canvas(totalWidth, totalHeight);
@@ -37,17 +45,17 @@ const composeScreens = async (x, y, width, height) => {
         img.onerror = (err) => cb(err instanceof Error ? err : new Error('Image load failed'));
         img.src = buf;
     });
-    for (const source of sources) {
+    for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
         const imgBuffer = source.thumbnail.toPNG();
         const img = await loadImage(imgBuffer);
-        // Match source to display
-        const displayIndex = displays.findIndex((d) => String(d.id) === source.display_id);
-        if (displayIndex === -1)
+        const display = displays.find((d) => String(d.id) === source.display_id)
+            ?? displays[Math.min(i, displays.length - 1)];
+        if (!display)
             continue;
-        const display = displays[displayIndex];
         const drawX = display.bounds.x - minX;
         const drawY = display.bounds.y - minY;
-        ctx.drawImage(img, drawX, drawY);
+        ctx.drawImage(img, 0, 0, img.width, img.height, drawX, drawY, display.bounds.width, display.bounds.height);
     }
     // Validate crop region is within canvas bounds
     const clampedX = Math.max(0, Math.min(x, totalWidth - 1));
@@ -121,10 +129,10 @@ const captureRegionInteractive = async () => {
         // Create one overlay window per monitor
         for (const display of displays) {
             const { id, bounds } = display;
-            const origPos = originalPositions.get(id);
+            // const origPos = originalPositions.get(id)!;
             const overlayWin = new electron_1.BrowserWindow({
-                x: origPos.x,
-                y: origPos.y,
+                x: bounds.x,
+                y: bounds.y,
                 width: bounds.width,
                 height: bounds.height,
                 transparent: true,
