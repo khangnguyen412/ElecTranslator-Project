@@ -2,13 +2,18 @@ import { BrowserWindow, screen, desktopCapturer, ipcMain, app } from 'electron';
 import { Canvas, Image } from 'canvas';
 import { promisify } from 'util';
 import { pathToFileURL } from 'url';
+import fs from 'fs';
+import path from 'path';
 
 import { getResourceElectronPath } from '../../utils/getResourcePath';
 
 /**
  * Disable hardware acceleration (Fix black screen issue when capturing video or other apps due to GPU conflict.)
  */
-app.disableHardwareAcceleration();
+const flagFile = (name: string) => path.join(app.getPath('userData'), name);
+if (!fs.existsSync(flagFile('hw-accel-on'))) {
+    app.disableHardwareAcceleration();
+}
 
 /**
  * Compose all screen captures and crop to the selected region.
@@ -25,11 +30,11 @@ const composeScreens = async (x: number, y: number, width: number, height: numbe
     const totalWidth = maxX - minX;
     const totalHeight = maxY - minY;
 
-    const sources = await desktopCapturer.getSources({ 
+    const sources = await desktopCapturer.getSources({
         types: ['screen'],
         thumbnailSize: {
-            width: maxX - minX,
-            height: maxY - minY,
+            width: Math.max(...displays.map((d) => Math.round(d.bounds.width * d.scaleFactor))),
+            height: Math.max(...displays.map((d) => Math.round(d.bounds.height * d.scaleFactor))),
         },
     });
 
@@ -43,19 +48,19 @@ const composeScreens = async (x: number, y: number, width: number, height: numbe
         img.src = buf;
     }) as (buf: Buffer) => Promise<Image>;
 
-    for (const source of sources) {
+    for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
         const imgBuffer = source.thumbnail.toPNG();
         const img = await loadImage(imgBuffer);
 
-        // Match source to display
-        const displayIndex = displays.findIndex((d) => String(d.id) === source.display_id);
-        if (displayIndex === -1) continue;
+        const display = displays.find((d) => String(d.id) === source.display_id)
+            ?? displays[Math.min(i, displays.length - 1)];
+        if (!display) continue;
 
-        const display = displays[displayIndex];
         const drawX = display.bounds.x - minX;
         const drawY = display.bounds.y - minY;
 
-        ctx.drawImage(img, drawX, drawY);
+        ctx.drawImage(img, 0, 0, img.width, img.height, drawX, drawY, display.bounds.width, display.bounds.height);
     }
 
     // Validate crop region is within canvas bounds
@@ -144,11 +149,11 @@ export const captureRegionInteractive = async (): Promise<string> => {
         // Create one overlay window per monitor
         for (const display of displays) {
             const { id, bounds } = display;
-            const origPos = originalPositions.get(id)!;
+            // const origPos = originalPositions.get(id)!;
 
             const overlayWin = new BrowserWindow({
-                x: origPos.x,
-                y: origPos.y,
+                x: bounds.x,
+                y: bounds.y,
                 width: bounds.width,
                 height: bounds.height,
                 transparent: true,
