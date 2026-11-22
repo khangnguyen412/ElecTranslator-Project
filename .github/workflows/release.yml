@@ -66,7 +66,7 @@ jobs:
   # Job 2: Build Windows + publish to GitHub Release
   # ───────────────────────────────────────────────
   build:
-    name: App Build (${{ matrix.os }})
+    name: App Build ${{ matrix.os }}
     needs: guard
     if: needs.guard.outputs.release == 'true'
     strategy:
