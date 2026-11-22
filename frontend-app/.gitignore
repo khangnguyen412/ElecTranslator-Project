@@ -37,3 +37,6 @@ dist-electron
 release
 resources/python
 resources/wheels
+
+# Test files
+test-build

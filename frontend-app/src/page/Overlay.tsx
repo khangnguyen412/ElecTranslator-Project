@@ -15,9 +15,7 @@ const Overlay: React.FC = () => {
         /**
          * Listen for overlay display event from Main Process
          */
-        window.electronAPI.onDisplayOverlay((newData) => {
-            setData(newData);
-        });
+        window.electronAPI.overlay.onDisplay((newData) => { setData(newData) });
     }, []);
 
     const handleCopy = () => {
@@ -28,7 +26,7 @@ const Overlay: React.FC = () => {
     };
 
     const handleClose = () => {
-        window.electronAPI.hideOverlay();
+        window.electronAPI.overlay.onHide();
     };
 
     if (!data?.body?.length) return null;
@@ -49,11 +47,12 @@ const Overlay: React.FC = () => {
                         <div key={idx} style={{ marginBottom: item.type === 'source' ? 8 : 0 }}>
                             {item.type === 'source' && (<div style={{ color: '#888', fontSize: '12px', marginBottom: 4 }}>Source:</div>)}
                             {item.type === 'translated' && (<div style={{ color: '#1890ff', fontSize: '12px', marginBottom: 4 }}>Translated:</div>)}
-                            <Paragraph style={{ 
-                                color: item.type === 'error' ? '#ff4d4f' : item.type === 'source' ? '#ccc' : '#fff', 
+                            <Paragraph style={{
+                                color: item.type === 'error' ? '#ff4d4f' : item.type === 'source' ? '#ccc' : '#fff',
                                 fontSize: item.type === 'error' ? '14px' : '16px', textOverflow: 'ellipsis',
-                                lineHeight: '1.6', maxHeight: '5em', overflowY: 'auto', whiteSpace: 'pre-wrap',  
-                                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', }}>
+                                lineHeight: '1.6', maxHeight: '5em', overflowY: 'auto', whiteSpace: 'pre-wrap',
+                                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                            }}>
                                 {item.text}
                             </Paragraph>
                         </div>

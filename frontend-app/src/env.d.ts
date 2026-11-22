@@ -2,25 +2,25 @@
 interface Window {
     electronAPI: {
         /**
-         * Capture Screen   
+         * Backend module
          */
-        captureScreen: () => Promise<{ base64: string; error?: string }>
+        backend: {
+            status: () => Promise<{ phase: 'idle' | 'starting' | 'installing' | 'ready' | 'error'; message?: string; lastError?: string; installID?: number }>
+            start: () => Promise<void>
+            retryInstall: () => Promise<void>
+        },
 
         /**
-         * Check Python dependencies status
+         * Screenshot module
          */
-        pythonStatus: () => Promise<{ phase: 'idle' | 'starting' | 'installing' | 'ready' | 'error' ; message?: string; lastError?: string; installID?: number}>
-        retryInstall: () => Promise<void>
-        startBackend: () => Promise<void>
+        screenshot: {
+            capture: () => Promise<{ base64: string; error?: string }>
+            onTrigger: (callback: () => void) => void
+            removeTrigger: (callback: () => void) => void
+        },
 
         /**
-         * Trigger Translate
-         */
-        onTriggerCapture: (callback: () => void) => void
-        removeTriggerCapture: (callback: () => void) => void
-
-        /**
-         * Store
+         * Store module
          */
         store: {
             getSetting: () => Promise<StoreType['setting']>
@@ -31,11 +31,19 @@ interface Window {
         }
 
         /**
-         * Overlay translation
+         * Overlay module
          */
-        showTranslatedText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => Promise<boolean>;
-        onDisplayOverlay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>; }) => void) => void;
-        hideOverlay: () => Promise<boolean>;
-        copyText: (text: string) => Promise<boolean>;
+        overlay: {
+            showText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => Promise<boolean>;
+            onDisplay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>; }) => void) => void;
+            onHide: () => Promise<boolean>;
+        }
+
+        /**
+         * Clipboard module
+         */
+        clipboard: {
+            copy: (text: string) => Promise<boolean>;
+        }
     }
 }

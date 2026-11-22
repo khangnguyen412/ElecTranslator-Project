@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { app, BrowserWindow, ipcMain, globalShortcut, clipboard, screen, } from 'electron';
 import path from "path";
+import fs from "fs";
 
 /**
  * React Developer Tools
@@ -10,7 +11,7 @@ import { installExtension, REACT_DEVELOPER_TOOLS } from '@tomjs/electron-devtool
 /**
  * Module
  */
-import { captureRegionInteractive } from './module/screenshot/screenshot'
+import { captureRegionInteractive } from './module/screenshot/screenShot'
 import { ensureDependencies, dependenciesStatus, startBackend, cleanupBackend, stopBackend } from "./module/checking/serviceStartup";
 import store from "./module/store/store";
 
@@ -18,6 +19,17 @@ let overlayWindow: BrowserWindow | null = null;
 let overlayLoading = false;
 let overlayLoadResolve: (() => void) | null = null;
 let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+const flagFile = (name: string) => path.join(app.getPath('userData'), name);
+
+/**
+ * GPU acceleration is ON by default.
+ * Why: with HW acceleration disabled Electron paints windows in software, and transparent overlay windows then fail to repaint -- the user sees nothing while mouse input still works 
+ *      (bug seen on user machines: overlay vanished on mousedown, capture still succeeded).
+ * Escape hatch: if some machine captures other apps/videos as BLACK (old GPU conflict bug), create an empty file to opt back out:  type nul > "%APPDATA%\ElecTranslator\hw-accel-off"
+ */
+if (fs.existsSync(flagFile('hw-accel-off'))) {
+    app.disableHardwareAcceleration();
+}
 
 /**
  * Create overlay window
@@ -83,7 +95,7 @@ function createWindow() {
      */
     const shortcut = 'Ctrl+Shift+Space';
     globalShortcut.register(shortcut, () => {
-        win.webContents.send('trigger-translate');
+        win.webContents.send('screenshot:trigger');
     });
 
     win.once('ready-to-show', () => {
@@ -115,8 +127,12 @@ const isDev = process.env.NODE_ENV === "development";
 /**
  * Get Python dependencies status
  */
-ipcMain.handle('python-status', () => dependenciesStatus)
-ipcMain.handle('retry-install', () => {
+ipcMain.handle('backend:status', () => dependenciesStatus)
+
+/**
+ * Retry install Python dependencies
+ */
+ipcMain.handle('backend:retry-install', () => {
     ensureDependencies().then(startBackend).catch(() => {});
     return true;
 })
@@ -124,7 +140,7 @@ ipcMain.handle('retry-install', () => {
 /**
  * Start backend service
  */
-ipcMain.handle('start-backend', async () => {
+ipcMain.handle('backend:start', async () => {
     try {
         await startBackend();
         return { status: 'success' };
@@ -186,10 +202,11 @@ ipcMain.handle('store:clear-history', () => {
     return true
 })
 
+
 /**
  * Register capture-screen event
  */
-ipcMain.handle('capture-screen', async () => {
+ipcMain.handle('screenshot:capture', async () => {
     try {
         const base64 = await captureRegionInteractive();
         return { base64 };
@@ -203,7 +220,7 @@ ipcMain.handle('capture-screen', async () => {
  * @param text Text to copy
  * @returns True if copy is successful
  */
-ipcMain.handle('copy-text', (_event, text: string) => {
+ipcMain.handle('clipboard:copy', (_event, text: string) => {
     clipboard.writeText(text || '');
     return true;
 });
@@ -211,7 +228,7 @@ ipcMain.handle('copy-text', (_event, text: string) => {
 /**
  * Hide overlay
  */
-ipcMain.handle('hide-overlay', () => {
+ipcMain.handle('overlay:hide', () => {
     overlayWindow?.hide();
     return true;
 });
@@ -219,7 +236,7 @@ ipcMain.handle('hide-overlay', () => {
 /**
  * Show translated text in overlay window
  */
-ipcMain.handle('show-translated-text', async (_event, title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => {
+ipcMain.handle('overlay:show-text', async (_event, title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => {
     // console.log('[Main] show-translated-text received:', title, body);
     if (!overlayWindow || overlayWindow.isDestroyed()) {
         createOverlayWindow();
@@ -248,7 +265,7 @@ ipcMain.handle('show-translated-text', async (_event, title: string, body: Array
     /**
      * Send translated text to overlay
      */
-    win.webContents.send('display-overlay-translation', { title, body });
+    win.webContents.send('overlay:display', { title, body });
 
     /**
      * Show overlay inactive avoid focus stealing
@@ -281,6 +298,9 @@ app.whenReady().then(async () => {
     createOverlayWindow();
     cleanupBackend();
 
+    /**
+     * Ensure Python dependencies are installed
+     */
     ensureDependencies().then(startBackend).catch((e) => { 
         console.error('[Dependencies]', e.message); 
     });

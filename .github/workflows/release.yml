@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+  # pull_request:
+  #   types: [closed]
+  #   branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -18,10 +18,10 @@ jobs:
   # Job 1: Check release condition
   # ───────────────────────────────────────────────
   guard:
-    name: Check release condition
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop')
+    name: Check Build
+    # if: >-
+    #   github.event_name == 'workflow_dispatch' ||
+    #   (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop')
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.pkg.outputs.version }}
@@ -66,7 +66,7 @@ jobs:
   # Job 2: Build Windows + publish to GitHub Release
   # ───────────────────────────────────────────────
   build:
-    name: Build ${{ matrix.os }}
+    name: App Build (${{ matrix.os }})
     needs: guard
     if: needs.guard.outputs.release == 'true'
     strategy:

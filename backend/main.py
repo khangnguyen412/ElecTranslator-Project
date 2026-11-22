@@ -48,6 +48,6 @@ app.include_router(process_ai_translate, prefix="/api/ai", tags=["AI"])
 def health_check() -> ApiResponse:
     return ApiResponse(success=True, message="Health check passed.", data=HealthResponse())
 
-
+# Run the FastAPI application following the configuration in app.config.py
 if __name__ == "__main__":
     uvicorn.run(app, host=config.HOST, port=config.PORT)

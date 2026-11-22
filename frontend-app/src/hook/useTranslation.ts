@@ -147,7 +147,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             /**
              * Hide overlay before translate
              */
-            await window.electronAPI.hideOverlay();
+            await window.electronAPI.overlay.onHide();
             let response: TranslateResponse;
             if (mode === 'Normal') {
                 response = await dispatch(NormalTranslateThunk({ ...buildBaseParams(), text: sourceText, })).unwrap();
@@ -155,7 +155,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
                 response = await dispatch(AITranslateThunk({ ...getAIProviderParams(), ...buildBaseParams(), text: sourceText, })).unwrap();
             }
             setResultText(response.translated_text);
-            await window.electronAPI.showTranslatedText('Translation Completed', [
+            await window.electronAPI.overlay.showText('Translation Completed', [
                 { text: sourceText || '', type: 'source' },
                 { text: response.translated_text || '', type: 'translated' },
             ]);
@@ -163,7 +163,7 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
             console.error(err);
-            await window.electronAPI.showTranslatedText('Translation Failed', [
+            await window.electronAPI.overlay.showText('Translation Failed', [
                 { text: err.message || '', type: 'error' },
             ]);
         } finally {
@@ -187,9 +187,9 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
             /**
              * Hide overlay before capture
              */
-            await window.electronAPI.hideOverlay();
+            await window.electronAPI.overlay.onHide();
             
-            const result = await window.electronAPI.captureScreen();
+            const result = await window.electronAPI.screenshot.capture();
             if (result.error) {
                 throw new Error(result.error);
             }
@@ -223,14 +223,14 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
                 throw new Error("Failed to process translation.");
             }
             setResultText(response.translated_text);
-            await window.electronAPI.showTranslatedText('Translation Completed', [
+            await window.electronAPI.overlay.showText('Translation Completed', [
                 { text: ocrResult.data.source_text || '', type: 'source' },
                 { text: response.translated_text || '', type: 'translated' },
             ]);
             message.success('Translation successful!');
         } catch (err: any) {
             message.error(`Translation failed: ${err.message}`);
-            await window.electronAPI.showTranslatedText('Translation Failed', [
+            await window.electronAPI.overlay.showText('Translation Failed', [
                 { text: err.message || '', type: 'error' },
             ]);
         } finally {
@@ -313,8 +313,8 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
 
     useEffect(() => {
         const handler = () => handleRef.current();
-        window.electronAPI?.onTriggerCapture(handler);
-        return () => window.electronAPI?.removeTriggerCapture(handler);
+        window.electronAPI?.screenshot.onTrigger(handler);
+        return () => window.electronAPI?.screenshot.removeTrigger(handler);
     }, [])
 
     return {
