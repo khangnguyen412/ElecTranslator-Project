@@ -111,7 +111,7 @@ const CheckingPage: React.FC = () => {
 
     const retry = () => {
         setError(null);
-        window.electronAPI.retryInstall()
+        window.electronAPI.backend.retryInstall()
         setAttempt(prev => prev + 1);
     }
 
@@ -124,7 +124,7 @@ const CheckingPage: React.FC = () => {
             setItems(ITEMS);
             const deadline = Date.now() + DEADLINE_MS;
             while (true) {
-                const checkRuntime = await window.electronAPI.pythonStatus();
+                const checkRuntime = await window.electronAPI.backend.status();
                 if (checkRuntime.phase === 'ready') {
                     setItem('runtime', { status: 'success', detail: 'ready' });
                     break;
@@ -143,7 +143,7 @@ const CheckingPage: React.FC = () => {
             // Phase 2: Start Backend
             setItem('backend', { status: 'loading', detail: 'Starting backend...' });
             try {
-                await window.electronAPI.startBackend();
+                await window.electronAPI.backend.start();
             } catch (e:any) {
                 return fail('backend', e.message || 'Backend start failed');
             }

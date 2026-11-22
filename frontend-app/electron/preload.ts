@@ -6,28 +6,28 @@ import { Store as StoreType } from './type/store.type'
  */
 contextBridge.exposeInMainWorld('electronAPI', {
     /**
-     * Capture Screen
+     * Backend module
      */
-    captureScreen: () => ipcRenderer.invoke('capture-screen'),
-
-    /**
-     * Checking System Status
-     */
-    pythonStatus: () => ipcRenderer.invoke('python-status'),
-    retryInstall: () => ipcRenderer.invoke('retry-install'),
-    startBackend: () => ipcRenderer.invoke('start-backend'),
-
-    /**
-     * Trigger Capture
-     */
-    onTriggerCapture: (callback: () => void) => {
-        ipcRenderer.removeAllListeners('trigger-translate');
-        ipcRenderer.on('trigger-translate', callback)
+    backend: {
+        status: () => ipcRenderer.invoke('backend:status'),
+        start: () => ipcRenderer.invoke('backend:start'),
+        retryInstall: () => ipcRenderer.invoke('backend:retry-install'),
     },
-    removeTriggerCapture: (callback: () => void) => ipcRenderer.removeListener('trigger-translate', callback),
 
     /**
-     * Store
+     * Screenshot module
+     */
+    screenshot: {
+        capture: () => ipcRenderer.invoke('screenshot:capture'),
+        onTrigger: (callback: () => void) => {
+            ipcRenderer.removeAllListeners('screenshot:trigger');
+            ipcRenderer.on('screenshot:trigger', callback)
+        },
+        removeTrigger: (callback: () => void) => ipcRenderer.removeListener('screenshot:trigger', callback),
+    },
+
+    /**
+     * Store module
      */
     store: {
         getSetting: () => ipcRenderer.invoke('store:get-setting'),
@@ -38,14 +38,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
 
     /**
-     * Overlay translation
+     * Overlay module
      */
-    showTranslatedText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) =>
-        ipcRenderer.invoke('show-translated-text', title, body),
-    onDisplayOverlay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }> | undefined }) => void) => {
-        ipcRenderer.removeAllListeners('display-overlay-translation');
-        ipcRenderer.on('display-overlay-translation', (_event, data) => callback(data));
+    overlay:{
+        showText: (title: string, body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }>) => ipcRenderer.invoke('overlay:show-text', title, body),
+        onDisplay: (callback: (data: { title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }> | undefined }) => void) => {
+            ipcRenderer.removeAllListeners('overlay:display');
+            ipcRenderer.on('overlay:display', (_event, data) => callback(data));
+        },
+        onHide: () => ipcRenderer.invoke('overlay:hide'),
     },
-    hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
-    copyText: (text: string) => ipcRenderer.invoke('copy-text', text),
+
+    /**
+     * Clipboard module
+     */
+    clipboard: {
+        copy: (text: string) => ipcRenderer.invoke('clipboard:copy', text),
+    }
 })

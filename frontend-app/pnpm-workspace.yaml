@@ -7,3 +7,8 @@ allowBuilds:
   esbuild: true
   sass-embedded: true
   sharp: true
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - canvas
+  - electron-winstaller

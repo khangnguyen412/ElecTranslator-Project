@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { app } from 'electron';
 import { spawn, ChildProcess, exec, execSync } from 'child_process';
 import path from 'path';
@@ -14,9 +13,6 @@ import { API_HOST, API_PORT } from '../../config';
 export let backendProcess: ChildProcess | null = null;
 export let dependenciesStatus: { phase: 'idle' | 'installing' | 'ready' | 'error'; message?: string } = { phase: 'idle' };
 
-const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v3/runtime-win-v3.zip';
-const RUNTIME_SHA256 = '6E53491A88EA69938203DC4DFB0D8239E86C85B3FEE28C620410AC23FB8326B8';
-
 const envRoot = () => path.join(app.getPath('userData'), 'python-env');
 const sources = () => app.isPackaged ? {
     python: path.join(process.resourcesPath, 'python'),
@@ -30,31 +26,66 @@ const sources = () => app.isPackaged ? {
     backend: path.join(app.getAppPath(), '..', 'backend')
 };
 
+/** 
+ * Pinned pair: bump URL + hash together when runtime changes. 
+ */
+const RUNTIME_URL = 'https://github.com/khangnguyen412/ElecTranslator-Project/releases/download/runtime-win-v3/runtime-win-v3.zip';
+const RUNTIME_SHA256 = '6E53491A88EA69938203DC4DFB0D8239E86C85B3FEE28C620410AC23FB8326B8';
+
 /**
- * Ensure runtime is available
- * @param env 
- * @param src 
- * @returns 
+ * Ensure the Python runtime exists before installing dependencies.
+ * No-op if python.exe is already installed or bundled; 
+ * otherwise download the pinned zip (SHA-256 verified) and unpack into `env`. Windows only.
+ * @param env - env root (userData/python-env); runtime lands in <env>/python
+ * @param src - resource paths from sources(), used to detect bundled python
  */
 const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Promise<void> => {
+    // Already installed or bundled -> nothing to do
     if (fs.existsSync(path.join(env, 'python', 'python.exe')) || fs.existsSync(path.join(src.python, 'python.exe'))) return;
     const zip = path.join(app.getPath('userData'), 'runtime-win.zip');
 
+    // Download runtime if not already downloaded
     if (!fs.existsSync(zip)) {
         dependenciesStatus.message = 'Downloading runtime...';
+
+        /**
+         * Start downloading the runtime zip (20-min timeout), but do not write to disk yet.
+         */
         const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60_000) });
-        if (!res.ok) throw new Error('Runtime URL response status ' + res.status);
+        if (!res.ok) {
+            throw new Error('Runtime URL response status ' + res.status);
+        }
+
+        /**
+         * Write a temporary file to disk.
+         * Get total size from headers.
+         */
         const out = fs.createWriteStream(zip + '.part');
         const total = Number(res.headers.get('content-length') ?? 0);
         let got = 0;
+
+        /**
+         * Stream download: read each arriving chunk, append to the .part temp file,
+         * accumulate bytes for progress %. Ends when the server finishes sending.
+         */
         for await (const chunk of res.body ?? []) {
             const buf = Buffer.from(chunk as ArrayBuffer);
             out.write(buf); got += buf.length;
             if (total) dependenciesStatus.message = `Downloading runtime... ${Math.round(got / total * 100)}%`;
         }
+
+        /**
+         * Wait for the write stream to finish, then verify SHA256 and rename to final zip, then unpack.
+         */
         await new Promise<void>((r, j) => { out.on('close', r); out.on('error', j); out.close(); });
+
+        /**
+         * Verify against pinned hash; corrupt/tampered file deleted -> re-download next run
+         */
         const h = createHash('sha256').update(fs.readFileSync(zip + '.part')).digest('hex');
-        if (h !== RUNTIME_SHA256.toLowerCase()) { fs.rmSync(zip + '.part'); throw new Error('SHA256 runtime not match'); }
+        if (h !== RUNTIME_SHA256.toLowerCase()) {
+            fs.rmSync(zip + '.part'); throw new Error('SHA256 runtime not match');
+        }
         fs.renameSync(zip + '.part', zip);
     }
 
@@ -64,10 +95,15 @@ const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Prom
 };
 
 /**
- * Ensure dependencies are available
- * @returns 
+ * Ensure Python backend dependencies are installed into %USERDATA%/electranslator/python-env.
+ * No-op (returns immediately) if an install is already in progress; skips full reinstall when `.deps_installed` marker matches md5 of requirements.txt.
+ * Otherwise: kill backend on API_PORT, wipe env, ensure runtime, copy python/wheels/scripts/backend, run install_deps.py (5-min timeout), write marker.
+ * Sets dependenciesStatus to 'ready' on success or 'error' (message = error.message) and rethrows on failure. Windows-only runtime path
  */
 export const ensureDependencies = async (): Promise<void> => {
+    /**
+     * Check if dependencies are already installed -> Skip if an install is already in progress
+     */
     if (dependenciesStatus.phase === 'installing') {
         return;
     }
@@ -115,7 +151,11 @@ export const ensureDependencies = async (): Promise<void> => {
 
         await new Promise<void>((resolve, reject) => {
             const t = setTimeout(() => { child.kill(); reject(new Error('Install timeout 5 minutes')); }, 5 * 60_000);
-            child.on('close', (c) => { clearTimeout(t); c === 0 ? resolve() : reject(new Error(`Install exit ${c} — please check ${path.join(env, 'install.log')}`)); });
+            child.on('close', (c) => {
+                clearTimeout(t);
+                if (c === 0) resolve();
+                reject(new Error(`Install exit ${c} — please check ${path.join(env, 'install.log')}`));
+            });
             child.on('error', reject);
         });
 
@@ -126,13 +166,18 @@ export const ensureDependencies = async (): Promise<void> => {
         fs.writeFileSync(marker, hash);
         fs.rmSync(path.join(homedir(), '.paddlex'), { recursive: true, force: true });
         dependenciesStatus = { phase: 'ready' };
-    } catch (error: any) {
+    } catch (error) {
         dependenciesStatus.phase = 'error';
-        dependenciesStatus.message = error.message;
+        dependenciesStatus.message = error instanceof Error ? error.message : 'Unknown error';
         throw error;
     }
 };
 
+/**
+ * Best-effort: free API_PORT so a fresh backend can bind.
+ * Windows: netstat + taskkill; Unix: lsof + kill -9.
+ * Never rejects — nothing listening, or a failed kill, is swallowed and the promise resolves anyway, so cleanup can't block install/startup.
+ */
 const killBackend = (): Promise<void> => {
     return new Promise((resolve) => {
         if (process.platform === 'win32') {
@@ -143,16 +188,7 @@ const killBackend = (): Promise<void> => {
             const command = `for /f "tokens=5" %a in ('netstat -ano ^| findstr ":${API_PORT}" ^| findstr "LISTENING"') do taskkill /F /PID %a`;
 
             exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    /**
-                     * If no process found, ignore the error
-                     */
-                    if (!stderr.includes("Could not find any process")) {
-                        console.log(`[Cleanup] No process found on port ${API_PORT} or already cleared.`);
-                    }
-                } else {
-                    console.log(`[Cleanup] Successfully killed process on port ${API_PORT}.`);
-                }
+                console.log(error ? `[Cleanup] Not killed on port ${API_PORT}: ${stderr || error.message}` : `[Cleanup] Successfully killed process on port ${API_PORT}.`);
                 resolve();
             });
         } else {
@@ -174,13 +210,19 @@ const killBackend = (): Promise<void> => {
     });
 };
 
-
+/**
+ * Spawn the backend (uvicorn) using the python-env runtime.
+ * No-op: resolves immediately if backendProcess already running
+ * Resolves when uvicorn logs "Uvicorn running on" / "Application startup complete".
+ * Rejects on bind error, spawn error, or 60s startup timeout.
+ * Sets backendProcess; cleared when the process closes.
+ */
 export const startBackend = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         const initBackend = async () => {
             try {
-                /**
-                 * Stop old backend instance if running
+                /** 
+                 * Already started -> resolve, do not spawn a second instance. 
                  */
                 if (backendProcess) {
                     console.log('[Backend] Already running.');
@@ -294,6 +336,11 @@ export const startBackend = (): Promise<void> => {
     });
 };
 
+/**
+ * Stop the backend: SIGINT first, force kill after 3s.
+ * No-op if not running. Always resolves, even if killing fails.
+ * Note: on Windows SIGINT is a forced terminate, not a graceful shutdown.
+ */
 export const stopBackend = async (): Promise<void> => {
     return new Promise((resolve) => {
         if (!backendProcess) {
@@ -344,7 +391,9 @@ export const stopBackend = async (): Promise<void> => {
 };
 
 /**
- * Setup Cleanup backend process when app closes
+ * Register lifecycle hooks so nothing keeps holding API_PORT after quit. 
+ * before-quit: fire-and-forget SIGINT (no wait). SIGINT/SIGTERM: stopBackend then exit.
+ * exit: force-free the port — execSync only, because the event loop is dying.
  */
 export const cleanupBackend = () => {
     /**
@@ -379,7 +428,7 @@ export const cleanupBackend = () => {
         console.log(`[Cleanup] Force-cleaning port ${API_PORT}...`);
         try {
             if (process.platform === 'win32') {
-                execSync(`for /f "tokens=5" %a in (\'netstat -ano ^| findstr ":${API_PORT}" ^| findstr "LISTENING"\') do taskkill /F /PID %a`, { stdio: 'ignore' });
+                execSync(`for /f "tokens=5" %a in ('netstat -ano ^| findstr ":${API_PORT}" ^| findstr "LISTENING"') do taskkill /F /PID %a`, { stdio: 'ignore' });
             } else {
                 execSync(`lsof -ti :${API_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
             }

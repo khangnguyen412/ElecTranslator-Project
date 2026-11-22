@@ -15,14 +15,15 @@
   },
   "license": "MIT",
   "scripts": {
+    "dev": "concurrently --kill-others \"vite\" \"npm run electron:dev\"",
+    "electron:dev": "wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && cross-env NODE_ENV=development electron . ",
+    "test:screenshot": "tsc -p electron/tsconfig.test.json && node test-build/test/module/screenshot/screenShot.test.js",
+    "clean": "rimraf release dist",
+    "dist": "pnpm build && electron-builder",
+    "build": "pnpm build:electron && pnpm build:frontend && pnpm build:overlay",
     "build:electron": "tsc -p electron/tsconfig.json",
     "build:overlay": "vite build --outDir dist/overlay --base ./",
     "build:frontend": "vite build",
-    "build": "pnpm build:electron && pnpm build:frontend && pnpm build:overlay",
-    "dist": "pnpm build && electron-builder",
-    "clean": "rimraf release dist",
-    "dev": "concurrently --kill-others \"vite\" \"npm run electron:dev\"",
-    "electron:dev": "wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && cross-env NODE_ENV=development electron . ",
     "preview": "vite preview",
     "verify:bundle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-bundle.ps1",
     "verify:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-bundle.ps1 -Strict"
@@ -112,8 +113,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-redux": "^9.3.0",
-    "react-router-dom": "^6.30.3",
-    "screenshot-desktop": "^1.15.4"
+    "react-router-dom": "^6.30.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
