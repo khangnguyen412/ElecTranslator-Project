@@ -3,13 +3,14 @@ import React, { useEffect, useState } from 'react';
 /**
  * antd
  */
-import { Card, Typography, Button, Space, message } from 'antd';
+import { Card, Typography, Button, Space } from 'antd';
 import { CopyOutlined, CloseOutlined } from '@ant-design/icons';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 const Overlay: React.FC = () => {
     const [data, setData] = useState<{ title: string; body: Array<{ text: string; type?: 'source' | 'translated' | 'error' }> } | null>(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         /**
@@ -19,10 +20,10 @@ const Overlay: React.FC = () => {
     }, []);
 
     const handleCopy = () => {
-        if (data?.body) {
-            navigator.clipboard.writeText(data.body.map(item => item.text).join('\n'));
-            message.success('Copy result to clipboard!');
-        }
+        const text = data?.body.filter(item => item.type === 'translated').map(item => item.text).join('\n');
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopied(true);
     };
 
     const handleClose = () => {
@@ -58,11 +59,12 @@ const Overlay: React.FC = () => {
                         </div>
                     ))}
 
-                    <Space style={{ marginTop: 16 }}>
-                        <Button type="primary" icon={<CopyOutlined />} onClick={handleCopy}>
-                            Copy
-                        </Button>
-                    </Space>
+                    {!isError && (
+                        <Space style={{ marginTop: 16 }}>
+                            <Button type="primary" icon={<CopyOutlined />} onClick={handleCopy}>Copy</Button>
+                            {copied && <Text type="secondary" style={{ marginLeft: 8 }}>Copy result to clipboard!</Text>}
+                        </Space>
+                    )}
                 </Card>
             </div>
         </React.Fragment>

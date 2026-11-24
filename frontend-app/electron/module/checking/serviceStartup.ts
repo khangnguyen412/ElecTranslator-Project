@@ -5,6 +5,12 @@ import fs from 'fs';
 import { homedir } from 'os';
 import { createHash } from 'crypto';
 
+/** 
+ * Module
+ */
+import { DOWNLOAD_TIMEOUT_MS, INSTALL_TIMEOUT_MS, BACKEND_START_TIMEOUT_MS } from './timeouts';
+
+
 /**
  * Config
  */
@@ -51,7 +57,7 @@ const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Prom
         /**
          * Start downloading the runtime zip (20-min timeout), but do not write to disk yet.
          */
-        const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(20 * 60_000) });
+        const res = await fetch(RUNTIME_URL, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
         if (!res.ok) {
             throw new Error('Runtime URL response status ' + res.status);
         }
@@ -97,7 +103,7 @@ const ensureRuntime = async (env: string, src: ReturnType<typeof sources>): Prom
 /**
  * Ensure Python backend dependencies are installed into %USERDATA%/electranslator/python-env.
  * No-op (returns immediately) if an install is already in progress; skips full reinstall when `.deps_installed` marker matches md5 of requirements.txt.
- * Otherwise: kill backend on API_PORT, wipe env, ensure runtime, copy python/wheels/scripts/backend, run install_deps.py (5-min timeout), write marker.
+ * Otherwise: kill backend on API_PORT, wipe env, ensure runtime, copy python/wheels/scripts/backend, run install_deps.py (10-min timeout), write marker.
  * Sets dependenciesStatus to 'ready' on success or 'error' (message = error.message) and rethrows on failure. Windows-only runtime path
  */
 export const ensureDependencies = async (): Promise<void> => {
@@ -150,10 +156,10 @@ export const ensureDependencies = async (): Promise<void> => {
         child.stdout!.pipe(log); child.stderr!.pipe(log);
 
         await new Promise<void>((resolve, reject) => {
-            const t = setTimeout(() => { child.kill(); reject(new Error('Install timeout 5 minutes')); }, 5 * 60_000);
+            const t = setTimeout(() => { child.kill(); reject(new Error(`Install timeout ${INSTALL_TIMEOUT_MS / 60_000} minutes`)); }, INSTALL_TIMEOUT_MS);
             child.on('close', (c) => {
                 clearTimeout(t);
-                if (c === 0) resolve();
+                if (c === 0) return resolve();
                 reject(new Error(`Install exit ${c} — please check ${path.join(env, 'install.log')}`));
             });
             child.on('error', reject);
@@ -325,7 +331,7 @@ export const startBackend = (): Promise<void> => {
                         }
                         reject(new Error('[Backend Error] Backend failed to start within timeout'));
                     }
-                }, 60_000);
+                }, BACKEND_START_TIMEOUT_MS);
 
             } catch (error) {
                 reject(error);

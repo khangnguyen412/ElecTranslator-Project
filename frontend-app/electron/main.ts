@@ -128,6 +128,9 @@ const isDev = process.env.NODE_ENV === "development";
  * Get Python dependencies status
  */
 ipcMain.handle('backend:status', () => dependenciesStatus)
+// Test UI
+// let n = 0;
+// ipcMain.handle('backend:status', () => ({ phase: 'installing', message: `Downloading runtime... ${(n = (n + 20) % 100)}%` }));
 
 /**
  * Retry install Python dependencies

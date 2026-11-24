@@ -5,6 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import AppConfig from "@/config/app.config";
 
 /**
+ * Electron module
+ */
+import { UI_POLL_DEADLINE_MS } from "../../electron/module/checking/timeouts";
+
+
+/**
  * Redux
  */
 import { useDispatch } from 'react-redux';
@@ -28,7 +34,7 @@ import "@/assets/scss/page/checking.scss";
 import type { CheckStatus, CheckItem } from "@/types/check.type";
 
 const POLL_MS = 2000;
-const DEADLINE_MS = 5 * 60_000;
+const DEADLINE_MS = UI_POLL_DEADLINE_MS;
 const BACKEND_TRIES = 15;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -100,6 +106,7 @@ const CheckingPage: React.FC = () => {
     const [attempt, setAttempt] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [items, setItems] = useState<CheckItem[]>(ITEMS);
+    const [firstRun, setFirstRun] = useState<boolean>(false);
     const setItem = (key: string, patch: Partial<CheckItem>) => {
         setItems((prev) => prev.map((i) => (i.key === key ? { ...i, ...patch } : i)));
     }
@@ -125,6 +132,11 @@ const CheckingPage: React.FC = () => {
             const deadline = Date.now() + DEADLINE_MS;
             while (true) {
                 const checkRuntime = await window.electronAPI.backend.status();
+
+                if (checkRuntime.phase === 'installing') {
+                    setFirstRun(true);
+                }
+
                 if (checkRuntime.phase === 'ready') {
                     setItem('runtime', { status: 'success', detail: 'ready' });
                     break;
@@ -144,7 +156,7 @@ const CheckingPage: React.FC = () => {
             setItem('backend', { status: 'loading', detail: 'Starting backend...' });
             try {
                 await window.electronAPI.backend.start();
-            } catch (e:any) {
+            } catch (e: any) {
                 return fail('backend', e.message || 'Backend start failed');
             }
             for (let i = 0; i < BACKEND_TRIES; i++) {
@@ -194,6 +206,10 @@ const CheckingPage: React.FC = () => {
                             <CheckRow key={item.key} item={item} />
                         ))}
                     </Space>
+
+                    {firstRun && !error && (
+                        <Alert type="info" showIcon style={{ marginTop: 12 }} title="This looks like your first launch"  description="ElecTranslator is downloading and installing the Python runtime. Please keep the app open — it can take 10–35 minutes depending on your machine and connection."/>
+                    )}
 
                     {error && (
                         <Alert type="error" showIcon title={error} style={{ marginTop: 12 }} action={<Button size="small" onClick={retry}>Retry</Button>} />

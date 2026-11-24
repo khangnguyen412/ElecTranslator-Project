@@ -20,9 +20,9 @@ class NineRouterService(BaseAIService):
     """
 
     async def translate(self, request: AiTranslateRequest) -> AiTranslateResponse:
-        '''
+        """
         Translate text using 9Router.
-        '''
+        """
         # Check request text
         text = (request.text or "").strip()
         if not text:
@@ -38,7 +38,7 @@ class NineRouterService(BaseAIService):
             endpoint = base_url
         else:
             endpoint = f"{base_url}/chat/completions"
-        
+
         # Check request model
         model = (request.model or "").strip()
         if not model:
@@ -52,6 +52,8 @@ class NineRouterService(BaseAIService):
 
         # Payload (OpenAI Compatible format)
         payload = {"model": model, "messages": [{"role": "system", "content": prompt}, {"role": "user", "content": text}], "stream": False, "temperature": 0.1}
+        if "qwen" in model.lower():
+            payload["enable_thinking"] = False
 
         try:
             async with AsyncClient(timeout=60) as client:
@@ -72,7 +74,6 @@ class NineRouterService(BaseAIService):
 
                 # Extract response following OpenAI Compatible format
                 choices = data.get("choices")
-
                 if not choices or not isinstance(choices, list):
                     raise AppException(status_code=502, error_code="INVALID_RESPONSE", message="No choices in 9Router response")
 
@@ -98,7 +99,6 @@ class NineRouterService(BaseAIService):
                 # Extract text content
                 content = message.get("content")
                 full_text = self._get_final_text(content)
-
                 if not full_text:
                     raise AppException(status_code=502, error_code="INVALID_RESPONSE", message="No content in 9Router response")
 

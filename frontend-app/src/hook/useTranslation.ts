@@ -141,8 +141,12 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
         setTranslating(true);
         setResultText('');
         try {
-            if (!sourceLang || !targetLang || !category) {
-                throw new Error('Please select source language, target language, and category');
+            if (!sourceLang || !targetLang) {
+                throw new Error('Please select source language, target language');
+            }
+
+            if (mode !== "Normal" && !category) {
+                throw new Error("Please select a category");
             }
             /**
              * Hide overlay before translate
@@ -180,15 +184,19 @@ export const useTranslation = (providerInfo?: ProviderInfo): UseTranslation => {
         setTranslatingOCR(true);
         handleClear();
         try {
-            if (!sourceLang || !targetLang || !model) {
-                throw new Error('Please select source language, target language, and model');
+            if (!sourceLang || !targetLang) {
+                throw new Error("Please select source language and target language.");
+            }
+
+            if (mode !== "Normal" && !mode) {
+                throw new Error("Please select an AI model in Translation Settings");
             }
 
             /**
              * Hide overlay before capture
              */
             await window.electronAPI.overlay.onHide();
-            
+
             const result = await window.electronAPI.screenshot.capture();
             if (result.error) {
                 throw new Error(result.error);
